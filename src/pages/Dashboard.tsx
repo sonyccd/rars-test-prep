@@ -150,13 +150,41 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-background py-6 px-4 radio-wave-bg">
       <div className="max-w-4xl mx-auto">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-3">
-            <Radio className="w-8 h-8 text-primary" />
-            <h1 className="text-2xl font-mono font-bold text-foreground">
-              <span className="text-primary">RARS</span> Test Prep
-            </h1>
+        {/* Header with Test Selector */}
+        <div className="flex items-center justify-between mb-8 flex-wrap gap-4">
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3">
+              <Radio className="w-8 h-8 text-primary" />
+              <h1 className="text-2xl font-mono font-bold text-foreground">
+                <span className="text-primary">RARS</span> Test Prep
+              </h1>
+            </div>
+            <div className="hidden md:block h-6 w-px bg-border" />
+            <Select value={selectedTest} onValueChange={(v) => setSelectedTest(v as TestType)}>
+              <SelectTrigger className="w-[180px] bg-card border-border">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="bg-card border-border">
+                {testTypes.map((test) => (
+                  <SelectItem 
+                    key={test.id} 
+                    value={test.id}
+                  >
+                    <span className="flex items-center gap-2">
+                      {test.name}
+                      {!test.available && (
+                        <Lock className="w-3 h-3 text-muted-foreground" />
+                      )}
+                    </span>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {!isTestAvailable && (
+              <span className="text-xs text-muted-foreground bg-secondary px-2 py-1 rounded">
+                Coming Soon
+              </span>
+            )}
           </div>
           <div className="flex items-center gap-3">
             <span className="text-sm text-muted-foreground hidden md:inline">
@@ -169,180 +197,11 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Test Type Selector */}
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
-        >
-          <div className="bg-card border border-border rounded-xl p-4">
-            <div className="flex items-center justify-between flex-wrap gap-4">
-              <div>
-                <p className="text-sm text-muted-foreground mb-1">Studying for</p>
-                <Select value={selectedTest} onValueChange={(v) => setSelectedTest(v as TestType)}>
-                  <SelectTrigger className="w-[220px] bg-background">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="bg-card border border-border">
-                    {testTypes.map((test) => (
-                      <SelectItem 
-                        key={test.id} 
-                        value={test.id}
-                        className="flex items-center gap-2"
-                      >
-                        <span className="flex items-center gap-2">
-                          {test.name}
-                          {!test.available && (
-                            <Lock className="w-3 h-3 text-muted-foreground" />
-                          )}
-                        </span>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              {!isTestAvailable && (
-                <div className="flex items-center gap-2 text-muted-foreground bg-secondary/50 px-4 py-2 rounded-lg">
-                  <Lock className="w-4 h-4" />
-                  <span className="text-sm font-medium">Coming Soon</span>
-                </div>
-              )}
-            </div>
-          </div>
-        </motion.div>
-
-        {/* Action Buttons */}
+        {/* Stats Grid */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8"
-        >
-          <button
-            onClick={() => isTestAvailable && setView('practice-test')}
-            disabled={!isTestAvailable}
-            className={cn(
-              "p-6 rounded-xl border-2 text-left transition-all",
-              isTestAvailable
-                ? "bg-card border-primary/30 hover:border-primary hover:shadow-lg hover:shadow-primary/10 cursor-pointer group"
-                : "bg-card/50 border-border/50 cursor-not-allowed opacity-60"
-            )}
-          >
-            <div className="flex items-center gap-3 mb-3">
-              <div className={cn(
-                "w-12 h-12 rounded-lg flex items-center justify-center",
-                isTestAvailable ? "bg-primary/10" : "bg-muted"
-              )}>
-                <Play className={cn("w-6 h-6", isTestAvailable ? "text-primary" : "text-muted-foreground")} />
-              </div>
-            </div>
-            <h3 className={cn(
-              "text-lg font-mono font-bold mb-1",
-              isTestAvailable ? "text-foreground group-hover:text-primary" : "text-muted-foreground"
-            )}>
-              Practice Test
-            </h3>
-            <p className="text-sm text-muted-foreground">
-              35 questions, timed like the real exam
-            </p>
-          </button>
-
-          <button
-            onClick={() => isTestAvailable && setView('random-practice')}
-            disabled={!isTestAvailable}
-            className={cn(
-              "p-6 rounded-xl border-2 text-left transition-all",
-              isTestAvailable
-                ? "bg-card border-accent/30 hover:border-accent hover:shadow-lg hover:shadow-accent/10 cursor-pointer group"
-                : "bg-card/50 border-border/50 cursor-not-allowed opacity-60"
-            )}
-          >
-            <div className="flex items-center gap-3 mb-3">
-              <div className={cn(
-                "w-12 h-12 rounded-lg flex items-center justify-center",
-                isTestAvailable ? "bg-accent/10" : "bg-muted"
-              )}>
-                <Zap className={cn("w-6 h-6", isTestAvailable ? "text-accent" : "text-muted-foreground")} />
-              </div>
-            </div>
-            <h3 className={cn(
-              "text-lg font-mono font-bold mb-1",
-              isTestAvailable ? "text-foreground group-hover:text-accent" : "text-muted-foreground"
-            )}>
-              Random Practice
-            </h3>
-            <p className="text-sm text-muted-foreground">
-              Quick practice, one question at a time
-            </p>
-          </button>
-
-          <button
-            onClick={() => isTestAvailable && weakQuestionIds.length > 0 && setView('weak-questions')}
-            disabled={!isTestAvailable || weakQuestionIds.length === 0}
-            className={cn(
-              "p-6 rounded-xl border-2 text-left transition-all",
-              isTestAvailable && weakQuestionIds.length > 0
-                ? "bg-card border-destructive/30 hover:border-destructive hover:shadow-lg hover:shadow-destructive/10 cursor-pointer group"
-                : "bg-card/50 border-border/50 cursor-not-allowed opacity-60"
-            )}
-          >
-            <div className="flex items-center gap-3 mb-3">
-              <div className={cn(
-                "w-12 h-12 rounded-lg flex items-center justify-center",
-                isTestAvailable && weakQuestionIds.length > 0 ? "bg-destructive/10" : "bg-muted"
-              )}>
-                <AlertTriangle className={cn(
-                  "w-6 h-6", 
-                  isTestAvailable && weakQuestionIds.length > 0 ? "text-destructive" : "text-muted-foreground"
-                )} />
-              </div>
-              {weakQuestionIds.length > 0 && (
-                <span className="bg-destructive text-destructive-foreground text-xs font-bold px-2 py-1 rounded-full">
-                  {weakQuestionIds.length}
-                </span>
-              )}
-            </div>
-            <h3 className={cn(
-              "text-lg font-mono font-bold mb-1",
-              isTestAvailable && weakQuestionIds.length > 0 ? "text-foreground group-hover:text-destructive" : "text-muted-foreground"
-            )}>
-              Review Weak Areas
-            </h3>
-            <p className="text-sm text-muted-foreground">
-              {weakQuestionIds.length > 0 
-                ? `Practice ${weakQuestionIds.length} questions you've missed`
-                : "No weak questions yet"}
-            </p>
-          </button>
-
-          <button
-            onClick={() => setView('bookmarks')}
-            className="p-6 rounded-xl border-2 text-left transition-all bg-card border-primary/30 hover:border-primary hover:shadow-lg hover:shadow-primary/10 cursor-pointer group"
-          >
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-12 h-12 rounded-lg flex items-center justify-center bg-primary/10">
-                <Bookmark className="w-6 h-6 text-primary" />
-              </div>
-              {bookmarks && bookmarks.length > 0 && (
-                <span className="bg-primary text-primary-foreground text-xs font-bold px-2 py-1 rounded-full">
-                  {bookmarks.length}
-                </span>
-              )}
-            </div>
-            <h3 className="text-lg font-mono font-bold mb-1 text-foreground group-hover:text-primary">
-              Bookmarked
-            </h3>
-            <p className="text-sm text-muted-foreground">
-              {bookmarks && bookmarks.length > 0
-                ? `Review ${bookmarks.length} saved question${bookmarks.length !== 1 ? 's' : ''}`
-                : "Save questions to review later"}
-            </p>
-          </button>
-        </motion.div>
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
           className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6"
         >
           <div className="bg-card border border-border rounded-xl p-4">
@@ -382,7 +241,7 @@ export default function Dashboard() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.25 }}
+          transition={{ delay: 0.15 }}
           className="bg-card border border-border rounded-xl p-4 mb-6"
         >
           <div className="flex items-center justify-between mb-2">
@@ -410,8 +269,8 @@ export default function Dashboard() {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-            className="bg-card border border-border rounded-xl p-4"
+            transition={{ delay: 0.2 }}
+            className="bg-card border border-border rounded-xl p-4 mb-8"
           >
             <h2 className="text-sm font-mono font-bold text-foreground mb-3">Recent Tests</h2>
             <div className="space-y-2">
@@ -454,6 +313,126 @@ export default function Dashboard() {
             </div>
           </motion.div>
         )}
+
+        {/* Section Title */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.25 }}
+          className="mb-4"
+        >
+          <h2 className="text-lg font-mono font-bold text-foreground">Start Practicing</h2>
+          <p className="text-sm text-muted-foreground">Choose how you want to study</p>
+        </motion.div>
+
+        {/* Action Buttons */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+          className="grid md:grid-cols-2 gap-4"
+        >
+          <Button
+            onClick={() => isTestAvailable && setView('practice-test')}
+            disabled={!isTestAvailable}
+            variant="outline"
+            className={cn(
+              "h-auto p-6 flex items-center gap-4 justify-start",
+              isTestAvailable 
+                ? "hover:bg-primary/5 hover:border-primary hover:shadow-lg hover:shadow-primary/10" 
+                : "opacity-60"
+            )}
+          >
+            <div className={cn(
+              "w-12 h-12 rounded-lg flex items-center justify-center shrink-0",
+              isTestAvailable ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
+            )}>
+              <Play className="w-6 h-6" />
+            </div>
+            <div className="text-left">
+              <h3 className="text-lg font-semibold text-foreground">Practice Test</h3>
+              <p className="text-sm text-muted-foreground">35 questions, like the real exam</p>
+            </div>
+          </Button>
+
+          <Button
+            onClick={() => isTestAvailable && setView('random-practice')}
+            disabled={!isTestAvailable}
+            variant="outline"
+            className={cn(
+              "h-auto p-6 flex items-center gap-4 justify-start",
+              isTestAvailable 
+                ? "hover:bg-accent/5 hover:border-accent hover:shadow-lg hover:shadow-accent/10" 
+                : "opacity-60"
+            )}
+          >
+            <div className={cn(
+              "w-12 h-12 rounded-lg flex items-center justify-center shrink-0",
+              isTestAvailable ? "bg-accent text-accent-foreground" : "bg-muted text-muted-foreground"
+            )}>
+              <Zap className="w-6 h-6" />
+            </div>
+            <div className="text-left">
+              <h3 className="text-lg font-semibold text-foreground">Random Practice</h3>
+              <p className="text-sm text-muted-foreground">Quick drills, one at a time</p>
+            </div>
+          </Button>
+
+          <Button
+            onClick={() => isTestAvailable && weakQuestionIds.length > 0 && setView('weak-questions')}
+            disabled={!isTestAvailable || weakQuestionIds.length === 0}
+            variant="outline"
+            className={cn(
+              "h-auto p-6 flex items-center gap-4 justify-start",
+              isTestAvailable && weakQuestionIds.length > 0
+                ? "hover:bg-destructive/5 hover:border-destructive hover:shadow-lg hover:shadow-destructive/10" 
+                : "opacity-60"
+            )}
+          >
+            <div className={cn(
+              "w-12 h-12 rounded-lg flex items-center justify-center shrink-0 relative",
+              isTestAvailable && weakQuestionIds.length > 0 ? "bg-destructive text-destructive-foreground" : "bg-muted text-muted-foreground"
+            )}>
+              <AlertTriangle className="w-6 h-6" />
+              {weakQuestionIds.length > 0 && (
+                <span className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center border-2 border-background">
+                  {weakQuestionIds.length}
+                </span>
+              )}
+            </div>
+            <div className="text-left">
+              <h3 className="text-lg font-semibold text-foreground">Review Weak Areas</h3>
+              <p className="text-sm text-muted-foreground">
+                {weakQuestionIds.length > 0 
+                  ? `${weakQuestionIds.length} questions to review`
+                  : "No weak questions yet"}
+              </p>
+            </div>
+          </Button>
+
+          <Button
+            onClick={() => setView('bookmarks')}
+            variant="outline"
+            className="h-auto p-6 flex items-center gap-4 justify-start hover:bg-primary/5 hover:border-primary hover:shadow-lg hover:shadow-primary/10"
+          >
+            <div className="w-12 h-12 rounded-lg flex items-center justify-center shrink-0 bg-primary text-primary-foreground relative">
+              <Bookmark className="w-6 h-6" />
+              {bookmarks && bookmarks.length > 0 && (
+                <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center border-2 border-background">
+                  {bookmarks.length}
+                </span>
+              )}
+            </div>
+            <div className="text-left">
+              <h3 className="text-lg font-semibold text-foreground">Bookmarked</h3>
+              <p className="text-sm text-muted-foreground">
+                {bookmarks && bookmarks.length > 0
+                  ? `${bookmarks.length} saved question${bookmarks.length !== 1 ? 's' : ''}`
+                  : "Save questions to review"}
+              </p>
+            </div>
+          </Button>
+        </motion.div>
       </div>
     </div>
   );
