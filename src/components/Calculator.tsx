@@ -165,9 +165,9 @@ export function Calculator({ className }: CalculatorProps) {
         variant="ghost"
         size="sm"
         onClick={() => setIsOpen(!isOpen)}
-        className="gap-2 w-28 justify-center hover:bg-muted hover:text-foreground"
+        className="gap-2 w-28 justify-start hover:bg-muted hover:text-foreground"
       >
-        <CalculatorIcon className="w-4 h-4" />
+        <CalculatorIcon className="w-4 h-4 flex-shrink-0" />
         {isOpen ? "Close" : "Calculator"}
       </Button>
       
