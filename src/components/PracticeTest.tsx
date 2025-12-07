@@ -1,13 +1,20 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { QuestionCard } from "@/components/QuestionCard";
 import { TestResults } from "@/components/TestResults";
 import { useQuestions, Question } from "@/hooks/useQuestions";
 import { useProgress } from "@/hooks/useProgress";
-import { ArrowLeft, ArrowRight, CheckCircle, Radio, Loader2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, CheckCircle, Radio, Loader2, Clock, Info } from "lucide-react";
 import { motion } from "framer-motion";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface PracticeTestProps {
   onBack: () => void;
@@ -22,6 +29,16 @@ function shuffleArray<T>(array: T[]): T[] {
   return shuffled;
 }
 
+function formatTime(seconds: number): string {
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  const secs = seconds % 60;
+  if (hours > 0) {
+    return `${hours}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  }
+  return `${minutes}:${secs.toString().padStart(2, '0')}`;
+}
+
 export function PracticeTest({ onBack }: PracticeTestProps) {
   const { data: allQuestions, isLoading, error } = useQuestions();
   const { saveTestResult } = useProgress();
@@ -33,6 +50,44 @@ export function PracticeTest({ onBack }: PracticeTestProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, 'A' | 'B' | 'C' | 'D'>>({});
   const [isFinished, setIsFinished] = useState(false);
+  
+  // Timer state
+  const [timerEnabled, setTimerEnabled] = useState(false);
+  const [timeRemaining, setTimeRemaining] = useState(120 * 60); // 120 minutes in seconds
+
+  const currentQuestion = questions.length > 0 ? questions[currentIndex] : null;
+  const answeredCount = Object.keys(answers).length;
+  const progress = questions.length > 0 ? (answeredCount / questions.length) * 100 : 0;
+
+  // Timer effect
+  useEffect(() => {
+    if (!timerEnabled || isFinished) return;
+    
+    const interval = setInterval(() => {
+      setTimeRemaining((prev) => {
+        if (prev <= 1) {
+          clearInterval(interval);
+          toast.warning("Time's up! Submitting your test.");
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [timerEnabled, isFinished]);
+
+  // Auto-submit when time runs out
+  useEffect(() => {
+    if (timerEnabled && timeRemaining === 0 && !isFinished) {
+      setIsFinished(true);
+      saveTestResult(questions, answers).then((result) => {
+        if (result) {
+          toast.success('Test results saved!');
+        }
+      });
+    }
+  }, [timeRemaining, timerEnabled, isFinished, questions, answers, saveTestResult]);
 
   if (isLoading) {
     return (
@@ -45,7 +100,7 @@ export function PracticeTest({ onBack }: PracticeTestProps) {
     );
   }
 
-  if (error || questions.length === 0) {
+  if (error || questions.length === 0 || !currentQuestion) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
@@ -55,10 +110,6 @@ export function PracticeTest({ onBack }: PracticeTestProps) {
       </div>
     );
   }
-
-  const currentQuestion = questions[currentIndex];
-  const answeredCount = Object.keys(answers).length;
-  const progress = (answeredCount / questions.length) * 100;
 
   const handleSelectAnswer = (answer: 'A' | 'B' | 'C' | 'D') => {
     setAnswers((prev) => ({
@@ -79,7 +130,7 @@ export function PracticeTest({ onBack }: PracticeTestProps) {
     }
   };
 
-  const handleFinish = async () => {
+  const handleFinishInternal = async () => {
     setIsFinished(true);
     const result = await saveTestResult(questions, answers);
     if (result) {
@@ -87,10 +138,22 @@ export function PracticeTest({ onBack }: PracticeTestProps) {
     }
   };
 
+  const handleFinish = () => {
+    handleFinishInternal();
+  };
+
   const handleRetake = () => {
     setAnswers({});
     setCurrentIndex(0);
     setIsFinished(false);
+    setTimeRemaining(120 * 60);
+  };
+
+  const handleTimerToggle = (enabled: boolean) => {
+    setTimerEnabled(enabled);
+    if (enabled) {
+      setTimeRemaining(120 * 60);
+    }
   };
 
   if (isFinished) {
@@ -109,13 +172,49 @@ export function PracticeTest({ onBack }: PracticeTestProps) {
       {/* Header */}
       <div className="max-w-3xl mx-auto mb-8">
         <div className="flex items-center justify-between mb-6">
-          <Button variant="ghost" onClick={onBack} className="gap-2">
+          <Button variant="ghost" onClick={onBack} className="gap-2 hover:bg-muted hover:text-foreground">
             <ArrowLeft className="w-4 h-4" />
             Exit Test
           </Button>
           <div className="flex items-center gap-2 text-foreground">
             <Radio className="w-5 h-5" />
             <span className="font-mono font-semibold">Practice Test</span>
+          </div>
+        </div>
+
+        {/* Timer Control */}
+        <div className="bg-card border border-border rounded-lg p-4 mb-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
+                <Switch
+                  id="timer-toggle"
+                  checked={timerEnabled}
+                  onCheckedChange={handleTimerToggle}
+                />
+                <Label htmlFor="timer-toggle" className="text-sm font-medium cursor-pointer">
+                  Exam Timer
+                </Label>
+              </div>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Info className="w-4 h-4 text-muted-foreground cursor-help" />
+                </TooltipTrigger>
+                <TooltipContent className="max-w-xs">
+                  <p className="text-sm">
+                    The real exam has no official time limit—only how long your Volunteer Examiners are willing to wait (typically around 2 hours). This timer is optional for practice.
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+            </div>
+            {timerEnabled && (
+              <div className="flex items-center gap-2">
+                <Clock className="w-4 h-4 text-muted-foreground" />
+                <span className={`font-mono text-lg ${timeRemaining < 300 ? 'text-destructive' : 'text-foreground'}`}>
+                  {formatTime(timeRemaining)}
+                </span>
+              </div>
+            )}
           </div>
         </div>
 
