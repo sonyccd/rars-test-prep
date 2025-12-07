@@ -1,4 +1,4 @@
-import { Question } from "@/data/questionPool";
+import { Question } from "@/hooks/useQuestions";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 

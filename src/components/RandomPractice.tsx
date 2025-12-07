@@ -1,8 +1,8 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { QuestionCard } from "@/components/QuestionCard";
-import { getRandomQuestion, Question } from "@/data/questionPool";
-import { ArrowLeft, Zap, SkipForward, RotateCcw } from "lucide-react";
+import { useQuestions, Question } from "@/hooks/useQuestions";
+import { ArrowLeft, Zap, SkipForward, RotateCcw, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 
 interface RandomPracticeProps {
@@ -10,11 +10,58 @@ interface RandomPracticeProps {
 }
 
 export function RandomPractice({ onBack }: RandomPracticeProps) {
-  const [question, setQuestion] = useState<Question>(() => getRandomQuestion());
+  const { data: allQuestions, isLoading, error } = useQuestions();
+  const [question, setQuestion] = useState<Question | null>(null);
   const [selectedAnswer, setSelectedAnswer] = useState<'A' | 'B' | 'C' | 'D' | null>(null);
   const [showResult, setShowResult] = useState(false);
   const [stats, setStats] = useState({ correct: 0, total: 0 });
   const [askedIds, setAskedIds] = useState<string[]>([]);
+
+  const getRandomQuestion = useCallback((excludeIds: string[] = []): Question | null => {
+    if (!allQuestions || allQuestions.length === 0) return null;
+    
+    const available = allQuestions.filter(q => !excludeIds.includes(q.id));
+    if (available.length === 0) {
+      return allQuestions[Math.floor(Math.random() * allQuestions.length)];
+    }
+    return available[Math.floor(Math.random() * available.length)];
+  }, [allQuestions]);
+
+  useEffect(() => {
+    if (allQuestions && allQuestions.length > 0 && !question) {
+      setQuestion(getRandomQuestion());
+    }
+  }, [allQuestions, question, getRandomQuestion]);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto mb-4" />
+          <p className="text-muted-foreground">Loading questions...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !allQuestions || allQuestions.length === 0) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-destructive mb-4">Failed to load questions</p>
+          <Button onClick={onBack}>Go Back</Button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!question) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   const handleSelectAnswer = (answer: 'A' | 'B' | 'C' | 'D') => {
     if (showResult) return;
@@ -29,13 +76,13 @@ export function RandomPractice({ onBack }: RandomPracticeProps) {
     }));
   };
 
-  const handleNextQuestion = useCallback(() => {
+  const handleNextQuestion = () => {
     const newAskedIds = [...askedIds, question.id];
     setAskedIds(newAskedIds);
     setQuestion(getRandomQuestion(newAskedIds));
     setSelectedAnswer(null);
     setShowResult(false);
-  }, [askedIds, question.id]);
+  };
 
   const handleSkip = () => {
     const newAskedIds = [...askedIds, question.id];

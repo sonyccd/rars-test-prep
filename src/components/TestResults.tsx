@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Question } from "@/data/questionPool";
+import { Question } from "@/hooks/useQuestions";
 import { QuestionCard } from "@/components/QuestionCard";
 import { ArrowLeft, ArrowRight, RotateCcw, Home, Trophy, XCircle } from "lucide-react";
 import { motion } from "framer-motion";

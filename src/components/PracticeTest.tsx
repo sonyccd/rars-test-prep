@@ -2,8 +2,8 @@ import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { QuestionCard } from "@/components/QuestionCard";
 import { TestResults } from "@/components/TestResults";
-import { getPracticeTestQuestions, Question } from "@/data/questionPool";
-import { ArrowLeft, ArrowRight, CheckCircle, Radio } from "lucide-react";
+import { useQuestions, Question } from "@/hooks/useQuestions";
+import { ArrowLeft, ArrowRight, CheckCircle, Radio, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { Progress } from "@/components/ui/progress";
 
@@ -11,11 +11,47 @@ interface PracticeTestProps {
   onBack: () => void;
 }
 
+function shuffleArray<T>(array: T[]): T[] {
+  const shuffled = [...array];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
+}
+
 export function PracticeTest({ onBack }: PracticeTestProps) {
-  const questions = useMemo(() => getPracticeTestQuestions(35), []);
+  const { data: allQuestions, isLoading, error } = useQuestions();
+  const questions = useMemo(() => {
+    if (!allQuestions) return [];
+    return shuffleArray([...allQuestions]).slice(0, 35);
+  }, [allQuestions]);
+  
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, 'A' | 'B' | 'C' | 'D'>>({});
   const [isFinished, setIsFinished] = useState(false);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto mb-4" />
+          <p className="text-muted-foreground">Loading questions...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || questions.length === 0) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-destructive mb-4">Failed to load questions</p>
+          <Button onClick={onBack}>Go Back</Button>
+        </div>
+      </div>
+    );
+  }
 
   const currentQuestion = questions[currentIndex];
   const answeredCount = Object.keys(answers).length;
