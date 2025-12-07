@@ -94,10 +94,24 @@ export function LicenseSelector({ onSelectLicense }: LicenseSelectorProps) {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.5, delay: 0.5 }}
-        className="mt-12 text-center text-muted-foreground"
+        className="mt-12 text-center text-muted-foreground space-y-3"
       >
         <p className="text-sm">
           Official FCC question pools • Free to use
+        </p>
+        <p className="text-sm">
+          A test prep app for the{" "}
+          <a
+            href="https://www.rars.org/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-primary hover:underline font-medium"
+          >
+            Raleigh Amateur Radio Society (RARS)
+          </a>
+        </p>
+        <p className="text-xs mt-4">
+          © {new Date().getFullYear()} Brad Bazemore. All rights reserved.
         </p>
       </motion.div>
     </div>
