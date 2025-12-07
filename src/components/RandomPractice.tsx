@@ -138,7 +138,7 @@ export function RandomPractice({ onBack }: RandomPracticeProps) {
               <p className="text-xs text-muted-foreground">Incorrect</p>
             </div>
             <div className="text-center">
-              <p className="text-2xl font-mono font-bold text-primary">{percentage}%</p>
+              <p className="text-2xl font-mono font-bold text-foreground">{percentage}%</p>
               <p className="text-xs text-muted-foreground">Score</p>
             </div>
           </div>
