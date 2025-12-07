@@ -1,5 +1,8 @@
-import { Radio, Lock } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Radio, Lock, User, LogOut } from "lucide-react";
 import { motion } from "framer-motion";
+import { useAuth } from "@/hooks/useAuth";
+import { Button } from "@/components/ui/button";
 
 interface LicenseSelectorProps {
   onSelectLicense: (license: 'technician') => void;
@@ -33,8 +36,36 @@ const licenses = [
 ];
 
 export function LicenseSelector({ onSelectLicense }: LicenseSelectorProps) {
+  const { user, signOut } = useAuth();
+
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4 radio-wave-bg">
+      {/* Auth Status */}
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="absolute top-4 right-4"
+      >
+        {user ? (
+          <div className="flex items-center gap-3">
+            <span className="text-sm text-muted-foreground">
+              {user.email}
+            </span>
+            <Button variant="ghost" size="sm" onClick={signOut} className="gap-2">
+              <LogOut className="w-4 h-4" />
+              Sign Out
+            </Button>
+          </div>
+        ) : (
+          <Link to="/auth">
+            <Button variant="outline" size="sm" className="gap-2">
+              <User className="w-4 h-4" />
+              Sign In
+            </Button>
+          </Link>
+        )}
+      </motion.div>
+
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: -30 }}
@@ -51,6 +82,11 @@ export function LicenseSelector({ onSelectLicense }: LicenseSelectorProps) {
         <p className="text-muted-foreground text-lg">
           Amateur Radio License Exam Preparation
         </p>
+        {!user && (
+          <p className="text-sm text-muted-foreground mt-2">
+            <Link to="/auth" className="text-primary hover:underline">Sign in</Link> to track your progress
+          </p>
+        )}
       </motion.div>
 
       {/* License Cards */}
