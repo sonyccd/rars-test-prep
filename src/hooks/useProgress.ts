@@ -1,0 +1,87 @@
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
+import { Question } from '@/hooks/useQuestions';
+
+export function useProgress() {
+  const { user } = useAuth();
+
+  const saveTestResult = async (
+    questions: Question[],
+    answers: Record<string, 'A' | 'B' | 'C' | 'D'>
+  ) => {
+    if (!user) return null;
+
+    const correctCount = questions.filter(
+      (q) => answers[q.id] === q.correctAnswer
+    ).length;
+    const totalQuestions = questions.length;
+    const percentage = Math.round((correctCount / totalQuestions) * 100);
+    const passed = correctCount >= 26;
+
+    // Save test result
+    const { data: testResult, error: testError } = await supabase
+      .from('practice_test_results')
+      .insert({
+        user_id: user.id,
+        score: correctCount,
+        total_questions: totalQuestions,
+        percentage,
+        passed,
+        test_type: 'practice'
+      })
+      .select()
+      .single();
+
+    if (testError) {
+      console.error('Error saving test result:', testError);
+      return null;
+    }
+
+    // Save individual question attempts
+    const answerToIndex: Record<string, number> = { 'A': 0, 'B': 1, 'C': 2, 'D': 3 };
+    
+    const attempts = questions.map((q) => ({
+      user_id: user.id,
+      question_id: q.id,
+      selected_answer: answerToIndex[answers[q.id]] ?? 0,
+      is_correct: answers[q.id] === q.correctAnswer,
+      test_result_id: testResult.id,
+      attempt_type: 'practice_test'
+    }));
+
+    const { error: attemptsError } = await supabase
+      .from('question_attempts')
+      .insert(attempts);
+
+    if (attemptsError) {
+      console.error('Error saving question attempts:', attemptsError);
+    }
+
+    return testResult;
+  };
+
+  const saveRandomAttempt = async (
+    question: Question,
+    selectedAnswer: 'A' | 'B' | 'C' | 'D'
+  ) => {
+    if (!user) return;
+
+    const answerToIndex: Record<string, number> = { 'A': 0, 'B': 1, 'C': 2, 'D': 3 };
+
+    const { error } = await supabase
+      .from('question_attempts')
+      .insert({
+        user_id: user.id,
+        question_id: question.id,
+        selected_answer: answerToIndex[selectedAnswer],
+        is_correct: selectedAnswer === question.correctAnswer,
+        attempt_type: 'random_practice'
+      });
+
+    if (error) {
+      console.error('Error saving random attempt:', error);
+    }
+  };
+
+  return { saveTestResult, saveRandomAttempt };
+}

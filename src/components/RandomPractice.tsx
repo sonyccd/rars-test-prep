@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { QuestionCard } from "@/components/QuestionCard";
 import { useQuestions, Question } from "@/hooks/useQuestions";
+import { useProgress } from "@/hooks/useProgress";
 import { ArrowLeft, Zap, SkipForward, RotateCcw, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 
@@ -11,6 +12,7 @@ interface RandomPracticeProps {
 
 export function RandomPractice({ onBack }: RandomPracticeProps) {
   const { data: allQuestions, isLoading, error } = useQuestions();
+  const { saveRandomAttempt } = useProgress();
   const [question, setQuestion] = useState<Question | null>(null);
   const [selectedAnswer, setSelectedAnswer] = useState<'A' | 'B' | 'C' | 'D' | null>(null);
   const [showResult, setShowResult] = useState(false);
@@ -63,7 +65,7 @@ export function RandomPractice({ onBack }: RandomPracticeProps) {
     );
   }
 
-  const handleSelectAnswer = (answer: 'A' | 'B' | 'C' | 'D') => {
+  const handleSelectAnswer = async (answer: 'A' | 'B' | 'C' | 'D') => {
     if (showResult) return;
     
     setSelectedAnswer(answer);
@@ -74,6 +76,9 @@ export function RandomPractice({ onBack }: RandomPracticeProps) {
       correct: prev.correct + (isCorrect ? 1 : 0),
       total: prev.total + 1
     }));
+
+    // Save attempt to database
+    await saveRandomAttempt(question, answer);
   };
 
   const handleNextQuestion = () => {

@@ -3,9 +3,11 @@ import { Button } from "@/components/ui/button";
 import { QuestionCard } from "@/components/QuestionCard";
 import { TestResults } from "@/components/TestResults";
 import { useQuestions, Question } from "@/hooks/useQuestions";
+import { useProgress } from "@/hooks/useProgress";
 import { ArrowLeft, ArrowRight, CheckCircle, Radio, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { Progress } from "@/components/ui/progress";
+import { toast } from "sonner";
 
 interface PracticeTestProps {
   onBack: () => void;
@@ -22,6 +24,7 @@ function shuffleArray<T>(array: T[]): T[] {
 
 export function PracticeTest({ onBack }: PracticeTestProps) {
   const { data: allQuestions, isLoading, error } = useQuestions();
+  const { saveTestResult } = useProgress();
   const questions = useMemo(() => {
     if (!allQuestions) return [];
     return shuffleArray([...allQuestions]).slice(0, 35);
@@ -76,8 +79,12 @@ export function PracticeTest({ onBack }: PracticeTestProps) {
     }
   };
 
-  const handleFinish = () => {
+  const handleFinish = async () => {
     setIsFinished(true);
+    const result = await saveTestResult(questions, answers);
+    if (result) {
+      toast.success('Test results saved!');
+    }
   };
 
   const handleRetake = () => {
