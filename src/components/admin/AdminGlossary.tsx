@@ -24,6 +24,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogTrigger,
 } from "@/components/ui/dialog";
 
 interface GlossaryTerm {
@@ -37,6 +38,7 @@ export function AdminGlossary() {
   const [searchTerm, setSearchTerm] = useState("");
   const [newTerm, setNewTerm] = useState("");
   const [newDefinition, setNewDefinition] = useState("");
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   
   // Edit state
   const [editingTerm, setEditingTerm] = useState<GlossaryTerm | null>(null);
@@ -69,6 +71,7 @@ export function AdminGlossary() {
       queryClient.invalidateQueries({ queryKey: ['glossary-terms'] });
       setNewTerm("");
       setNewDefinition("");
+      setIsAddDialogOpen(false);
       toast.success("Term added successfully");
     },
     onError: (error) => {
@@ -181,44 +184,57 @@ export function AdminGlossary() {
         </DialogContent>
       </Dialog>
 
-      {/* Add New Term */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Plus className="w-5 h-5" />
-            Add New Term
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <Input
-            placeholder="Term"
-            value={newTerm}
-            onChange={(e) => setNewTerm(e.target.value)}
-          />
-          <Textarea
-            placeholder="Definition"
-            value={newDefinition}
-            onChange={(e) => setNewDefinition(e.target.value)}
-            rows={3}
-          />
-          <Button 
-            onClick={handleAddTerm} 
-            disabled={addTerm.isPending}
-          >
-            {addTerm.isPending ? (
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-            ) : (
-              <Plus className="w-4 h-4 mr-2" />
-            )}
-            Add Term
-          </Button>
-        </CardContent>
-      </Card>
+      {/* Add Term Dialog */}
+      <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Add New Term</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div>
+              <Label>Term</Label>
+              <Input
+                placeholder="Enter term..."
+                value={newTerm}
+                onChange={(e) => setNewTerm(e.target.value)}
+              />
+            </div>
+            <div>
+              <Label>Definition</Label>
+              <Textarea
+                placeholder="Enter definition..."
+                value={newDefinition}
+                onChange={(e) => setNewDefinition(e.target.value)}
+                rows={5}
+              />
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleAddTerm} disabled={addTerm.isPending}>
+                {addTerm.isPending ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <Plus className="w-4 h-4 mr-2" />
+                )}
+                Add Term
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Search and List */}
       <Card>
         <CardHeader>
-          <CardTitle>Glossary Terms ({terms.length})</CardTitle>
+          <CardTitle className="flex items-center justify-between">
+            <span>Glossary Terms ({terms.length})</span>
+            <Button onClick={() => setIsAddDialogOpen(true)}>
+              <Plus className="w-4 h-4 mr-2" />
+              Add Term
+            </Button>
+          </CardTitle>
           <div className="relative mt-4">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
