@@ -1,11 +1,12 @@
 import { useState, useMemo } from "react";
-import { Search, BookText, Layers, Trophy, Zap, Circle } from "lucide-react";
+import { Search, BookText, Layers, Trophy, Zap, Circle, Filter } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -25,9 +26,12 @@ interface GlossaryProgress {
   last_seen_at: string;
 }
 
+type StatusFilter = 'all' | 'mastered' | 'learning' | 'weak' | 'unseen';
+
 export function Glossary({ onStartFlashcards }: GlossaryProps) {
   const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
 
   const { data: terms = [], isLoading: termsLoading } = useQuery({
     queryKey: ['glossary-terms'],
@@ -78,14 +82,36 @@ export function Glossary({ onStartFlashcards }: GlossaryProps) {
     return progress.length;
   }, [progress]);
 
+  const getTermStatus = (termId: string): StatusFilter => {
+    const p = progressMap.get(termId);
+    if (!p) return 'unseen';
+    if (p.mastered) return 'mastered';
+    if (p.times_seen >= 2) {
+      const accuracy = p.times_correct / p.times_seen;
+      if (accuracy < 0.6) return 'weak';
+    }
+    return 'learning';
+  };
+
   const filteredTerms = useMemo(() => {
-    if (!searchQuery.trim()) return terms;
-    const query = searchQuery.toLowerCase();
-    return terms.filter(term => 
-      term.term.toLowerCase().includes(query) || 
-      term.definition.toLowerCase().includes(query)
-    );
-  }, [terms, searchQuery]);
+    let result = terms;
+    
+    // Apply search filter
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      result = result.filter(term => 
+        term.term.toLowerCase().includes(query) || 
+        term.definition.toLowerCase().includes(query)
+      );
+    }
+    
+    // Apply status filter
+    if (statusFilter !== 'all') {
+      result = result.filter(term => getTermStatus(term.id) === statusFilter);
+    }
+    
+    return result;
+  }, [terms, searchQuery, statusFilter, progressMap]);
 
   // Group terms by first letter
   const groupedTerms = useMemo(() => {
@@ -105,16 +131,6 @@ export function Glossary({ onStartFlashcards }: GlossaryProps) {
     return a.localeCompare(b);
   });
 
-  const getTermStatus = (termId: string) => {
-    const p = progressMap.get(termId);
-    if (!p) return 'unseen';
-    if (p.mastered) return 'mastered';
-    if (p.times_seen >= 2) {
-      const accuracy = p.times_correct / p.times_seen;
-      if (accuracy < 0.6) return 'weak';
-    }
-    return 'learning';
-  };
 
   const isLoading = termsLoading || progressLoading;
 
@@ -177,15 +193,41 @@ export function Glossary({ onStartFlashcards }: GlossaryProps) {
         </Card>
       )}
 
-      {/* Search */}
-      <div className="relative mb-6">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-        <Input
-          placeholder="Search terms or definitions..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-10"
-        />
+      {/* Search and Filter */}
+      <div className="flex flex-col sm:flex-row gap-3 mb-6">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input
+            placeholder="Search terms or definitions..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10"
+          />
+        </div>
+        {user && (
+          <ToggleGroup 
+            type="single" 
+            value={statusFilter} 
+            onValueChange={(value) => value && setStatusFilter(value as StatusFilter)}
+            className="justify-start"
+          >
+            <ToggleGroupItem value="all" aria-label="Show all" className="text-xs px-3">
+              All
+            </ToggleGroupItem>
+            <ToggleGroupItem value="mastered" aria-label="Show mastered" className="text-xs px-3 data-[state=on]:bg-primary/20 data-[state=on]:text-primary">
+              <Trophy className="w-3 h-3 mr-1" />
+              Mastered
+            </ToggleGroupItem>
+            <ToggleGroupItem value="weak" aria-label="Show weak" className="text-xs px-3 data-[state=on]:bg-orange-500/20 data-[state=on]:text-orange-500">
+              <Zap className="w-3 h-3 mr-1" />
+              Weak
+            </ToggleGroupItem>
+            <ToggleGroupItem value="unseen" aria-label="Show unseen" className="text-xs px-3">
+              <Circle className="w-3 h-3 mr-1" />
+              New
+            </ToggleGroupItem>
+          </ToggleGroup>
+        )}
       </div>
 
       {/* Terms List */}
