@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -9,6 +10,8 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Plus, Trash2, Search, Loader2, Pencil } from "lucide-react";
 import { BulkImportGlossary } from "./BulkImportGlossary";
+import { EditHistoryViewer, EditHistoryEntry } from "./EditHistoryViewer";
+import { Separator } from "@/components/ui/separator";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -32,10 +35,12 @@ interface GlossaryTerm {
   id: string;
   term: string;
   definition: string;
+  edit_history?: EditHistoryEntry[];
 }
 
 export function AdminGlossary() {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
   const [newTerm, setNewTerm] = useState("");
   const [newDefinition, setNewDefinition] = useState("");
@@ -51,19 +56,34 @@ export function AdminGlossary() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('glossary_terms')
-        .select('id, term, definition')
+        .select('id, term, definition, edit_history')
         .order('term', { ascending: true });
       
       if (error) throw error;
-      return data as GlossaryTerm[];
+      return data.map(t => ({
+        ...t,
+        edit_history: (Array.isArray(t.edit_history) ? t.edit_history : []) as unknown as EditHistoryEntry[]
+      })) as GlossaryTerm[];
     },
   });
 
   const addTerm = useMutation({
     mutationFn: async ({ term, definition }: { term: string; definition: string }) => {
+      const historyEntry: EditHistoryEntry = {
+        user_id: user?.id || '',
+        user_email: user?.email || 'Unknown',
+        action: 'created',
+        changes: {},
+        timestamp: new Date().toISOString(),
+      };
+
       const { error } = await supabase
         .from('glossary_terms')
-        .insert({ term: term.trim(), definition: definition.trim() });
+        .insert({ 
+          term: term.trim(), 
+          definition: definition.trim(),
+          edit_history: JSON.parse(JSON.stringify([historyEntry]))
+        });
       
       if (error) throw error;
     },
@@ -81,10 +101,33 @@ export function AdminGlossary() {
   });
 
   const updateTerm = useMutation({
-    mutationFn: async ({ id, term, definition }: { id: string; term: string; definition: string }) => {
+    mutationFn: async ({ id, term, definition, originalTerm }: { id: string; term: string; definition: string; originalTerm: GlossaryTerm }) => {
+      // Build changes object
+      const changes: Record<string, { from: unknown; to: unknown }> = {};
+      if (originalTerm.term !== term.trim()) {
+        changes.term = { from: originalTerm.term, to: term.trim() };
+      }
+      if (originalTerm.definition !== definition.trim()) {
+        changes.definition = { from: originalTerm.definition, to: definition.trim() };
+      }
+
+      const historyEntry: EditHistoryEntry = {
+        user_id: user?.id || '',
+        user_email: user?.email || 'Unknown',
+        action: 'updated',
+        changes,
+        timestamp: new Date().toISOString(),
+      };
+
+      const existingHistory = originalTerm.edit_history || [];
+
       const { error } = await supabase
         .from('glossary_terms')
-        .update({ term: term.trim(), definition: definition.trim() })
+        .update({ 
+          term: term.trim(), 
+          definition: definition.trim(),
+          edit_history: JSON.parse(JSON.stringify([...existingHistory, historyEntry]))
+        })
         .eq('id', id);
       
       if (error) throw error;
@@ -146,7 +189,7 @@ export function AdminGlossary() {
       toast.error("Please fill in both term and definition");
       return;
     }
-    updateTerm.mutate({ id: editingTerm.id, term: editTerm, definition: editDefinition });
+    updateTerm.mutate({ id: editingTerm.id, term: editTerm, definition: editDefinition, originalTerm: editingTerm });
   };
 
   return (
@@ -173,6 +216,13 @@ export function AdminGlossary() {
                 rows={5}
               />
             </div>
+            
+            <Separator />
+            
+            <EditHistoryViewer 
+              history={editingTerm?.edit_history || []} 
+              entityType="term" 
+            />
             <div className="flex justify-between gap-2">
               <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
                 <AlertDialogTrigger asChild>

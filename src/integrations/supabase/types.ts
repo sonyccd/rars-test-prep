@@ -182,18 +182,21 @@ export type Database = {
         Row: {
           created_at: string
           definition: string
+          edit_history: Json
           id: string
           term: string
         }
         Insert: {
           created_at?: string
           definition: string
+          edit_history?: Json
           id?: string
           term: string
         }
         Update: {
           created_at?: string
           definition?: string
+          edit_history?: Json
           id?: string
           term?: string
         }
@@ -335,6 +338,7 @@ export type Database = {
         Row: {
           correct_answer: number
           created_at: string
+          edit_history: Json
           explanation: string | null
           id: string
           links: Json
@@ -346,6 +350,7 @@ export type Database = {
         Insert: {
           correct_answer: number
           created_at?: string
+          edit_history?: Json
           explanation?: string | null
           id: string
           links?: Json
@@ -357,6 +362,7 @@ export type Database = {
         Update: {
           correct_answer?: number
           created_at?: string
+          edit_history?: Json
           explanation?: string | null
           id?: string
           links?: Json
