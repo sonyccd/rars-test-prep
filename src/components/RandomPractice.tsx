@@ -9,17 +9,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { Zap, SkipForward, RotateCcw, Loader2, Flame, Trophy, Award, ChevronLeft } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
-
 interface HistoryEntry {
   question: Question;
   selectedAnswer: 'A' | 'B' | 'C' | 'D' | null;
   showResult: boolean;
 }
-
 interface RandomPracticeProps {
   onBack: () => void;
 }
-
 export function RandomPractice({
   onBack
 }: RandomPracticeProps) {
@@ -34,8 +31,9 @@ export function RandomPractice({
   const {
     saveRandomAttempt
   } = useProgress();
-  const { capture } = usePostHog();
-  
+  const {
+    capture
+  } = usePostHog();
   const [stats, setStats] = useState({
     correct: 0,
     total: 0
@@ -46,11 +44,10 @@ export function RandomPractice({
   const [showStreakCelebration, setShowStreakCelebration] = useState(false);
   const [celebrationMilestone, setCelebrationMilestone] = useState(0);
   const [askedIds, setAskedIds] = useState<string[]>([]);
-  
+
   // Session history for back navigation
   const [questionHistory, setQuestionHistory] = useState<HistoryEntry[]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
-  
   const STREAK_MILESTONES = [5, 10, 15, 20, 25];
   const getMilestoneMessage = (milestone: number) => {
     switch (milestone) {
@@ -98,7 +95,6 @@ export function RandomPractice({
       best_streak: newBestStreak
     }).eq('id', user.id);
   };
-
   const getRandomQuestion = useCallback((excludeIds: string[] = []): Question | null => {
     if (!allQuestions || allQuestions.length === 0) return null;
     const available = allQuestions.filter(q => !excludeIds.includes(q.id));
@@ -113,7 +109,11 @@ export function RandomPractice({
     if (allQuestions && allQuestions.length > 0 && questionHistory.length === 0) {
       const firstQuestion = getRandomQuestion();
       if (firstQuestion) {
-        setQuestionHistory([{ question: firstQuestion, selectedAnswer: null, showResult: false }]);
+        setQuestionHistory([{
+          question: firstQuestion,
+          selectedAnswer: null,
+          showResult: false
+        }]);
         setHistoryIndex(0);
       }
     }
@@ -124,12 +124,14 @@ export function RandomPractice({
     setQuestionHistory(prev => {
       const newHistory = [...prev];
       if (historyIndex >= 0 && historyIndex < newHistory.length) {
-        newHistory[historyIndex] = { ...newHistory[historyIndex], ...updates };
+        newHistory[historyIndex] = {
+          ...newHistory[historyIndex],
+          ...updates
+        };
       }
       return newHistory;
     });
   };
-
   if (isLoading) {
     return <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
@@ -138,7 +140,6 @@ export function RandomPractice({
         </div>
       </div>;
   }
-
   if (error || !allQuestions || allQuestions.length === 0) {
     return <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
@@ -147,18 +148,17 @@ export function RandomPractice({
         </div>
       </div>;
   }
-
   if (!question) {
     return <div className="min-h-screen bg-background flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>;
   }
-
   const handleSelectAnswer = async (answer: 'A' | 'B' | 'C' | 'D') => {
     if (showResult) return;
-    
-    updateCurrentEntry({ selectedAnswer: answer, showResult: true });
-    
+    updateCurrentEntry({
+      selectedAnswer: answer,
+      showResult: true
+    });
     const isCorrect = answer === question.correctAnswer;
     setStats(prev => ({
       correct: prev.correct + (isCorrect ? 1 : 0),
@@ -170,7 +170,7 @@ export function RandomPractice({
       question_id: question.id,
       is_correct: isCorrect,
       subelement: question.subelement,
-      practice_type: 'random',
+      practice_type: 'random'
     });
 
     // Update streak
@@ -186,7 +186,9 @@ export function RandomPractice({
             saveBestStreak(newStreak);
 
             // Track new best streak
-            capture(ANALYTICS_EVENTS.NEW_BEST_STREAK, { streak: newStreak });
+            capture(ANALYTICS_EVENTS.NEW_BEST_STREAK, {
+              streak: newStreak
+            });
 
             // Show special message for new all-time best
             if (newStreak > 1) {
@@ -202,10 +204,11 @@ export function RandomPractice({
         if (STREAK_MILESTONES.includes(newStreak)) {
           setCelebrationMilestone(newStreak);
           setShowStreakCelebration(true);
-          
+
           // Track streak milestone
-          capture(ANALYTICS_EVENTS.STREAK_MILESTONE, { milestone: newStreak });
-          
+          capture(ANALYTICS_EVENTS.STREAK_MILESTONE, {
+            milestone: newStreak
+          });
           toast.success(getMilestoneMessage(newStreak), {
             icon: <Trophy className="w-5 h-5 text-primary" />,
             duration: 3000
@@ -221,46 +224,54 @@ export function RandomPractice({
     // Save attempt to database
     await saveRandomAttempt(question, answer);
   };
-
   const handleNextQuestion = () => {
     // If we're not at the end of history, just move forward
     if (historyIndex < questionHistory.length - 1) {
       setHistoryIndex(historyIndex + 1);
       return;
     }
-    
+
     // Otherwise, get a new question
     const newAskedIds = [...askedIds, question.id];
     setAskedIds(newAskedIds);
     const nextQuestion = getRandomQuestion(newAskedIds);
     if (nextQuestion) {
-      setQuestionHistory(prev => [...prev, { question: nextQuestion, selectedAnswer: null, showResult: false }]);
+      setQuestionHistory(prev => [...prev, {
+        question: nextQuestion,
+        selectedAnswer: null,
+        showResult: false
+      }]);
       setHistoryIndex(prev => prev + 1);
     }
   };
-
   const handleSkip = () => {
     const newAskedIds = [...askedIds, question.id];
     setAskedIds(newAskedIds);
     const nextQuestion = getRandomQuestion(newAskedIds);
     if (nextQuestion) {
       // Mark current as skipped (no answer selected)
-      setQuestionHistory(prev => [...prev, { question: nextQuestion, selectedAnswer: null, showResult: false }]);
+      setQuestionHistory(prev => [...prev, {
+        question: nextQuestion,
+        selectedAnswer: null,
+        showResult: false
+      }]);
       setHistoryIndex(prev => prev + 1);
     }
   };
-
   const handlePreviousQuestion = () => {
     if (historyIndex > 0) {
       setHistoryIndex(historyIndex - 1);
     }
   };
-
   const handleReset = () => {
     setAskedIds([]);
     const firstQuestion = getRandomQuestion();
     if (firstQuestion) {
-      setQuestionHistory([{ question: firstQuestion, selectedAnswer: null, showResult: false }]);
+      setQuestionHistory([{
+        question: firstQuestion,
+        selectedAnswer: null,
+        showResult: false
+      }]);
       setHistoryIndex(0);
     }
     setStats({
@@ -270,10 +281,8 @@ export function RandomPractice({
     setStreak(0);
     setBestStreak(allTimeBestStreak);
   };
-
   const canGoBack = historyIndex > 0;
   const isViewingHistory = historyIndex < questionHistory.length - 1;
-
   return <div className="flex-1 bg-background py-8 px-4 pb-24 md:pb-8">
       {/* Header */}
       <div className="max-w-3xl mx-auto mb-8">
@@ -340,45 +349,29 @@ export function RandomPractice({
 
       {/* Actions */}
       <div className="max-w-3xl mx-auto mt-8 flex justify-center gap-4">
-        {canGoBack && (
-          <Button variant="outline" onClick={handlePreviousQuestion} className="gap-2">
+        {canGoBack && <Button variant="outline" onClick={handlePreviousQuestion} className="gap-2">
             <ChevronLeft className="w-4 h-4" />
             Previous
-          </Button>
-        )}
-        {!showResult ? (
-          <Button variant="outline" onClick={handleSkip} className="gap-2">
+          </Button>}
+        {!showResult ? <Button variant="outline" onClick={handleSkip} className="gap-2">
             <SkipForward className="w-4 h-4" />
             Skip Question
-          </Button>
-        ) : (
-          <Button onClick={handleNextQuestion} variant="default" size="lg" className="gap-2">
+          </Button> : <Button onClick={handleNextQuestion} variant="default" size="lg" className="gap-2">
             {isViewingHistory ? "Next" : "Next Question"}
             <Zap className="w-4 h-4" />
-          </Button>
-        )}
+          </Button>}
       </div>
 
       {/* History indicator */}
-      {questionHistory.length > 1 && (
-        <motion.p 
-          initial={{ opacity: 0 }} 
-          animate={{ opacity: 1 }} 
-          className="text-center text-muted-foreground text-sm mt-4"
-        >
-          Question {historyIndex + 1} of {questionHistory.length}
-        </motion.p>
-      )}
-
-      {/* Keyboard Hint */}
-      <motion.p initial={{
+      {questionHistory.length > 1 && <motion.p initial={{
       opacity: 0
     }} animate={{
       opacity: 1
-    }} transition={{
-      delay: 0.5
     }} className="text-center text-muted-foreground text-sm mt-4">
-        Tip: Click an answer option to see if you&apos;re correct
-      </motion.p>
+          Question {historyIndex + 1} of {questionHistory.length}
+        </motion.p>}
+
+      {/* Keyboard Hint */}
+      
     </div>;
 }
