@@ -425,12 +425,7 @@ export default function Dashboard() {
                 <span className="text-xs text-muted-foreground">
                   Resets Sunday
                 </span>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-6 w-6"
-                  onClick={() => setShowGoalsModal(true)}
-                >
+                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setShowGoalsModal(true)}>
                   <Settings2 className="w-3.5 h-3.5" />
                 </Button>
               </div>
@@ -473,7 +468,7 @@ export default function Dashboard() {
                     <span>Goal reached!</span>
                   </div> : <Button variant="outline" size="sm" className="w-full text-xs h-7 gap-1" onClick={() => setCurrentView('practice-test')}>
                     <Target className="w-3 h-3" />
-                    Take Test
+                    Take a Test
                   </Button>}
               </div>
             </div>
@@ -604,15 +599,9 @@ export default function Dashboard() {
       </AlertDialog>
 
       {/* Weekly Goals Modal */}
-      {user && (
-        <WeeklyGoalsModal
-          open={showGoalsModal}
-          onOpenChange={setShowGoalsModal}
-          userId={user.id}
-          currentGoals={weeklyGoals || null}
-          onGoalsUpdated={() => queryClient.invalidateQueries({ queryKey: ['weekly-goals', user.id] })}
-        />
-      )}
+      {user && <WeeklyGoalsModal open={showGoalsModal} onOpenChange={setShowGoalsModal} userId={user.id} currentGoals={weeklyGoals || null} onGoalsUpdated={() => queryClient.invalidateQueries({
+      queryKey: ['weekly-goals', user.id]
+    })} />}
 
       <AppLayout currentView={currentView} onViewChange={handleViewChange} selectedTest={selectedTest} onTestChange={setSelectedTest}>
         {renderContent()}
