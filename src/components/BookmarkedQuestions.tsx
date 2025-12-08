@@ -37,7 +37,7 @@ export function BookmarkedQuestions({
       </div>;
   }
   if (selectedQuestion) {
-    return <div className="flex-1 bg-background py-8 px-4 pb-24 overflow-y-auto">
+    return <div className="flex-1 bg-background py-8 px-4 pb-24 md:pb-8 overflow-y-auto">
         <div className="max-w-3xl mx-auto mb-8">
           <div className="flex items-center justify-between mb-6">
             <Button variant="ghost" onClick={() => {
@@ -87,7 +87,7 @@ export function BookmarkedQuestions({
           </div>}
       </div>;
   }
-  return <div className="flex-1 bg-background py-8 px-4 pb-24 overflow-y-auto">
+  return <div className="flex-1 bg-background py-8 px-4 pb-24 md:pb-8 overflow-y-auto">
       <div className="max-w-3xl mx-auto">
         {/* Header */}
         <div className="flex items-center justify-end mb-8">
