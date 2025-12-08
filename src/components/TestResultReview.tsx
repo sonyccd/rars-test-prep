@@ -143,15 +143,15 @@ export function TestResultReview({ testResultId, onBack }: TestResultReviewProps
 
   return (
     <div className="h-full flex flex-col bg-background radio-wave-bg">
-      <div className="flex-1 overflow-y-auto py-8 px-4">
-        <div className="max-w-2xl mx-auto">
+      <div className="flex-1 flex flex-col overflow-hidden py-6 px-4">
+        <div className="max-w-2xl mx-auto w-full flex flex-col flex-1 overflow-hidden">
 
-          {/* Result Header */}
+          {/* Result Header - Fixed */}
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             className={cn(
-              "p-6 rounded-2xl border-2 mb-6",
+              "p-6 rounded-2xl border-2 mb-4 shrink-0",
               passed
                 ? "bg-success/10 border-success/30"
                 : "bg-destructive/10 border-destructive/30"
@@ -214,18 +214,18 @@ export function TestResultReview({ testResultId, onBack }: TestResultReviewProps
             </p>
           </motion.div>
 
-          {/* Review Section */}
+          {/* Review Section - Scrollable */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
-            className="bg-card border border-border rounded-xl p-6"
+            className="bg-card border border-border rounded-xl p-6 flex flex-col flex-1 overflow-hidden min-h-0"
           >
-            <h2 className="text-xl font-mono font-bold text-foreground mb-4">
+            <h2 className="text-xl font-mono font-bold text-foreground mb-4 shrink-0">
               Review Your Answers
             </h2>
 
-            <div className="space-y-2">
+            <div className="space-y-2 overflow-y-auto flex-1 min-h-0 pr-2">
               {questions.map((q, idx) => {
                 const isCorrect = answers[q.id] === q.correctAnswer;
                 return (
@@ -241,7 +241,7 @@ export function TestResultReview({ testResultId, onBack }: TestResultReviewProps
                   >
                     <span
                       className={cn(
-                        "w-8 h-8 rounded-full flex items-center justify-center text-sm font-mono font-bold",
+                        "w-8 h-8 rounded-full flex items-center justify-center text-sm font-mono font-bold shrink-0",
                         isCorrect
                           ? "bg-success text-success-foreground"
                           : "bg-destructive text-destructive-foreground"
@@ -254,7 +254,7 @@ export function TestResultReview({ testResultId, onBack }: TestResultReviewProps
                     </span>
                     <span
                       className={cn(
-                        "text-xs font-mono",
+                        "text-xs font-mono shrink-0",
                         isCorrect ? "text-success" : "text-destructive"
                       )}
                     >
