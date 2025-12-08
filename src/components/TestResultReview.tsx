@@ -151,62 +151,66 @@ export function TestResultReview({ testResultId, onBack }: TestResultReviewProps
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             className={cn(
-              "text-center p-8 rounded-2xl border-2 mb-8",
+              "p-6 rounded-2xl border-2 mb-6",
               passed
                 ? "bg-success/10 border-success/30"
                 : "bg-destructive/10 border-destructive/30"
             )}
           >
-            <div className="flex justify-center mb-4">
-              {passed ? (
-                <Trophy className="w-16 h-16 text-success" />
-              ) : (
-                <XCircle className="w-16 h-16 text-destructive" />
-              )}
-            </div>
-            <h1
-              className={cn(
-                "text-4xl font-mono font-bold mb-2",
-                passed ? "text-success" : "text-destructive"
-              )}
-            >
-              {passed ? "PASSED" : "NOT PASSED"}
-            </h1>
-            
             {/* Date */}
-            <div className="flex items-center justify-center gap-2 text-muted-foreground mb-4">
+            <div className="flex items-center gap-2 text-muted-foreground mb-4">
               <Calendar className="w-4 h-4" />
               <span className="text-sm">
                 {completedAt.toLocaleDateString()} at {completedAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
               </span>
             </div>
 
-            {/* Score Display */}
-            <div className="flex items-center justify-center gap-8 mt-6">
-              <div className="text-center">
-                <p className="text-5xl font-mono font-bold text-foreground">
-                  {correctCount}
-                </p>
-                <p className="text-sm text-muted-foreground">Correct</p>
+            {/* Status and Score Display - All in one row */}
+            <div className="flex items-center gap-6">
+              {/* Pass/Fail Status */}
+              <div className="flex items-center gap-3">
+                {passed ? (
+                  <Trophy className="w-10 h-10 text-success" />
+                ) : (
+                  <XCircle className="w-10 h-10 text-destructive" />
+                )}
+                <h1
+                  className={cn(
+                    "text-2xl font-mono font-bold",
+                    passed ? "text-success" : "text-destructive"
+                  )}
+                >
+                  {passed ? "PASSED" : "FAILED"}
+                </h1>
               </div>
-              <div className="w-px h-16 bg-border" />
-              <div className="text-center">
-                <p className="text-5xl font-mono font-bold text-foreground">
-                  {totalQuestions - correctCount}
-                </p>
-                <p className="text-sm text-muted-foreground">Incorrect</p>
-              </div>
-              <div className="w-px h-16 bg-border" />
-              <div className="text-center">
-                <p className="text-5xl font-mono font-bold text-foreground">
-                  {percentage}%
-                </p>
-                <p className="text-sm text-muted-foreground">Score</p>
+
+              <div className="w-px h-12 bg-border" />
+
+              {/* Metrics */}
+              <div className="flex items-center gap-6 flex-1">
+                <div className="text-center">
+                  <p className="text-3xl font-mono font-bold text-foreground">
+                    {correctCount}
+                  </p>
+                  <p className="text-xs text-muted-foreground">Correct</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-3xl font-mono font-bold text-foreground">
+                    {totalQuestions - correctCount}
+                  </p>
+                  <p className="text-xs text-muted-foreground">Incorrect</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-3xl font-mono font-bold text-foreground">
+                    {percentage}%
+                  </p>
+                  <p className="text-xs text-muted-foreground">Score</p>
+                </div>
               </div>
             </div>
 
-            <p className="text-sm text-muted-foreground mt-4">
-              Passing score: 26 out of 35 (74%)
+            <p className="text-xs text-muted-foreground mt-3">
+              Passing: 26/35 (74%)
             </p>
           </motion.div>
 
