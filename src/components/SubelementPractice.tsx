@@ -124,7 +124,7 @@ export function SubelementPractice({
 
   // Show subelement selection list
   if (topicView === 'list' || !selectedSubelement) {
-    return <div className="flex-1 bg-background py-8 px-4 pb-24 overflow-y-auto">
+    return <div className="flex-1 bg-background py-8 px-4 pb-24 md:pb-8 overflow-y-auto">
       <div className="max-w-3xl mx-auto">
           <div className="flex items-center justify-end mb-8">
             
@@ -228,7 +228,7 @@ export function SubelementPractice({
   };
   const percentage = stats.total > 0 ? Math.round(stats.correct / stats.total * 100) : 0;
   const progress = Math.round(askedIds.length / currentQuestions.length * 100);
-  return <div className="flex-1 bg-background py-8 px-4 pb-24 overflow-y-auto">
+  return <div className="flex-1 bg-background py-8 px-4 pb-24 md:pb-8 overflow-y-auto">
       {/* Header */}
       <div className="max-w-3xl mx-auto mb-8">
         <div className="flex items-center justify-between mb-6">
