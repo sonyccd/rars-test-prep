@@ -1,6 +1,15 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
+export interface LinkData {
+  url: string;
+  title: string;
+  description: string;
+  image: string;
+  type: 'video' | 'article' | 'website';
+  siteName: string;
+}
+
 export interface Question {
   id: string;
   question: string;
@@ -13,6 +22,7 @@ export interface Question {
   correctAnswer: 'A' | 'B' | 'C' | 'D';
   subelement: string;
   group: string;
+  links: LinkData[];
 }
 
 interface DbQuestion {
@@ -22,6 +32,7 @@ interface DbQuestion {
   correct_answer: number;
   subelement: string;
   question_group: string;
+  links: unknown;
 }
 
 const answerMap: Record<number, 'A' | 'B' | 'C' | 'D'> = {
@@ -33,6 +44,7 @@ const answerMap: Record<number, 'A' | 'B' | 'C' | 'D'> = {
 
 function transformQuestion(dbQuestion: DbQuestion): Question {
   const options = dbQuestion.options as string[];
+  const links = (dbQuestion.links as LinkData[]) || [];
   return {
     id: dbQuestion.id,
     question: dbQuestion.question,
@@ -45,6 +57,7 @@ function transformQuestion(dbQuestion: DbQuestion): Question {
     correctAnswer: answerMap[dbQuestion.correct_answer] || 'A',
     subelement: dbQuestion.subelement,
     group: dbQuestion.question_group,
+    links,
   };
 }
 
