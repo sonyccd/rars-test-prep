@@ -136,8 +136,6 @@ export function BulkImportQuestions({ testType }: BulkImportQuestionsProps) {
       // Fix common invalid escape sequences (like \F, \S, etc.)
       cleanContent = cleanContent.replace(/\\([^"\\\/bfnrtu])/g, '\\\\$1');
       const data = JSON.parse(cleanContent);
-      console.log('JSON parsed successfully, data type:', Array.isArray(data) ? 'array' : typeof data, 'length:', Array.isArray(data) ? data.length : 'n/a');
-      
       const questions = Array.isArray(data) ? data : data.questions || [];
       
       return questions.map((q: any) => ({
@@ -159,8 +157,7 @@ export function BulkImportQuestions({ testType }: BulkImportQuestionsProps) {
         explanation: q.explanation || undefined,
         links: q.links || undefined,
       }));
-    } catch (error) {
-      console.error('JSON parse error:', error);
+    } catch {
       return [];
     }
   };
@@ -260,7 +257,6 @@ export function BulkImportQuestions({ testType }: BulkImportQuestionsProps) {
 
       if (file.name.endsWith('.json')) {
         questions = parseJSON(content);
-        console.log('Parsed JSON questions:', questions.length, 'first:', questions[0]);
       } else if (file.name.endsWith('.csv')) {
         questions = parseCSV(content);
       } else {
@@ -269,7 +265,6 @@ export function BulkImportQuestions({ testType }: BulkImportQuestionsProps) {
       }
 
       if (questions.length === 0) {
-        console.log('No questions parsed. File content length:', content.length, 'First 200 chars:', content.substring(0, 200));
         toast.error('No valid questions found in file');
         return;
       }
