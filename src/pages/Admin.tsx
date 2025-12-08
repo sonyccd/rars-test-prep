@@ -5,7 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AdminGlossary } from "@/components/admin/AdminGlossary";
 import { AdminQuestions } from "@/components/admin/AdminQuestions";
-import { AdminLinks } from "@/components/admin/AdminLinks";
+
 import { AdminStats } from "@/components/admin/AdminStats";
 import { Loader2, ShieldAlert } from "lucide-react";
 import { AppLayout } from "@/components/AppLayout";
@@ -72,11 +72,10 @@ export default function Admin() {
             setActiveTab(value);
             if (value !== "questions") setLinkQuestionId("");
           }} className="w-full">
-            <TabsList className="grid w-full grid-cols-4 mb-8">
+            <TabsList className="grid w-full grid-cols-3 mb-8">
               <TabsTrigger value="stats">Statistics</TabsTrigger>
               <TabsTrigger value="glossary">Glossary Terms</TabsTrigger>
               <TabsTrigger value="questions">Questions</TabsTrigger>
-              <TabsTrigger value="links">Question Links</TabsTrigger>
             </TabsList>
 
             <TabsContent value="stats">
@@ -89,10 +88,6 @@ export default function Admin() {
 
             <TabsContent value="questions">
               <AdminQuestions testType={selectedTest} highlightQuestionId={linkQuestionId} />
-            </TabsContent>
-
-            <TabsContent value="links">
-              <AdminLinks testType={selectedTest} initialQuestionId={linkQuestionId} />
             </TabsContent>
           </Tabs>
         </div>
