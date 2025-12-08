@@ -30,6 +30,7 @@ export function ProfileModal({
 }: ProfileModalProps) {
   const navigate = useNavigate();
   const [displayName, setDisplayName] = useState(userInfo.displayName || "");
+  const [isEditingName, setIsEditingName] = useState(false);
   const [isUpdatingName, setIsUpdatingName] = useState(false);
   const [newEmail, setNewEmail] = useState("");
   const [isUpdatingEmail, setIsUpdatingEmail] = useState(false);
@@ -165,21 +166,48 @@ export function ProfileModal({
               <User className="w-4 h-4 text-muted-foreground" />
               Display Name
             </div>
-            <div className="flex gap-2">
-              <Input
-                value={displayName}
-                onChange={(e) => setDisplayName(e.target.value)}
-                placeholder="Enter your display name"
-                className="flex-1"
-              />
-              <Button 
-                onClick={handleUpdateDisplayName}
-                disabled={isUpdatingName || displayName === userInfo.displayName}
-                size="sm"
-              >
-                {isUpdatingName ? "Saving..." : "Save"}
-              </Button>
-            </div>
+            {isEditingName ? (
+              <div className="flex gap-2">
+                <Input
+                  value={displayName}
+                  onChange={(e) => setDisplayName(e.target.value)}
+                  placeholder="Enter your display name"
+                  className="flex-1"
+                  autoFocus
+                />
+                <Button 
+                  onClick={async () => {
+                    await handleUpdateDisplayName();
+                    setIsEditingName(false);
+                  }}
+                  disabled={isUpdatingName || displayName === userInfo.displayName}
+                  size="sm"
+                >
+                  {isUpdatingName ? "Saving..." : "Save"}
+                </Button>
+                <Button 
+                  variant="outline"
+                  onClick={() => {
+                    setDisplayName(userInfo.displayName || "");
+                    setIsEditingName(false);
+                  }}
+                  size="sm"
+                >
+                  Cancel
+                </Button>
+              </div>
+            ) : (
+              <div className="flex items-center justify-between">
+                <span className="text-sm">{userInfo.displayName || "Not set"}</span>
+                <Button 
+                  variant="outline"
+                  onClick={() => setIsEditingName(true)}
+                  size="sm"
+                >
+                  Edit
+                </Button>
+              </div>
+            )}
             <p className="text-xs text-muted-foreground">
               {userInfo.email}
             </p>
