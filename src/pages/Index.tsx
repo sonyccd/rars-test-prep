@@ -10,11 +10,22 @@ const Index = () => {
 
   useEffect(() => {
     if (!loading && user) {
-      navigate('/dashboard');
+      console.log('Redirecting authenticated user to dashboard');
+      navigate('/dashboard', { replace: true });
     }
   }, [user, loading, navigate]);
 
+  // Show loading while determining auth state
   if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  // If user is authenticated, show loading while redirect happens
+  if (user) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
