@@ -131,7 +131,11 @@ export function BulkImportQuestions({ testType }: BulkImportQuestionsProps) {
 
   const parseJSON = (content: string): ImportQuestion[] => {
     try {
-      const data = JSON.parse(content);
+      // Remove BOM if present
+      const cleanContent = content.replace(/^\uFEFF/, '');
+      const data = JSON.parse(cleanContent);
+      console.log('JSON parsed successfully, data type:', Array.isArray(data) ? 'array' : typeof data, 'length:', Array.isArray(data) ? data.length : 'n/a');
+      
       const questions = Array.isArray(data) ? data : data.questions || [];
       
       return questions.map((q: any) => ({
@@ -153,7 +157,8 @@ export function BulkImportQuestions({ testType }: BulkImportQuestionsProps) {
         explanation: q.explanation || undefined,
         links: q.links || undefined,
       }));
-    } catch {
+    } catch (error) {
+      console.error('JSON parse error:', error);
       return [];
     }
   };
