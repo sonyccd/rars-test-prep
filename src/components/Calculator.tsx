@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { Calculator as CalculatorIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { usePostHog, ANALYTICS_EVENTS } from "@/hooks/usePostHog";
 
 interface CalculatorProps {
   className?: string;
@@ -13,6 +14,19 @@ export function Calculator({ className }: CalculatorProps) {
   const [previousValue, setPreviousValue] = useState<number | null>(null);
   const [operation, setOperation] = useState<string | null>(null);
   const [waitingForOperand, setWaitingForOperand] = useState(false);
+  const [hasTrackedOpen, setHasTrackedOpen] = useState(false);
+  const { capture } = usePostHog();
+
+  // Track calculator opened
+  useEffect(() => {
+    if (isOpen && !hasTrackedOpen) {
+      capture(ANALYTICS_EVENTS.CALCULATOR_OPENED);
+      setHasTrackedOpen(true);
+    }
+    if (!isOpen) {
+      setHasTrackedOpen(false);
+    }
+  }, [isOpen, hasTrackedOpen, capture]);
 
   const inputDigit = (digit: string) => {
     if (waitingForOperand) {
@@ -97,6 +111,9 @@ export function Calculator({ className }: CalculatorProps) {
       default:
         result = inputValue;
     }
+
+    // Track calculation performed
+    capture(ANALYTICS_EVENTS.CALCULATOR_USED, { operation });
 
     setDisplay(String(result));
     setPreviousValue(null);

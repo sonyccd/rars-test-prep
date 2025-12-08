@@ -1,11 +1,13 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { usePostHog, ANALYTICS_EVENTS } from '@/hooks/usePostHog';
 import { toast } from 'sonner';
 
 export function useBookmarks() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const { capture } = usePostHog();
 
   const { data: bookmarks, isLoading } = useQuery({
     queryKey: ['bookmarks', user?.id],
@@ -39,8 +41,9 @@ export function useBookmarks() {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['bookmarks', user?.id] });
+      capture(ANALYTICS_EVENTS.QUESTION_BOOKMARKED, { question_id: variables.questionId });
       toast.success('Question bookmarked!');
     },
     onError: (error) => {
@@ -60,9 +63,11 @@ export function useBookmarks() {
         .eq('question_id', questionId);
       
       if (error) throw error;
+      return questionId;
     },
-    onSuccess: () => {
+    onSuccess: (questionId) => {
       queryClient.invalidateQueries({ queryKey: ['bookmarks', user?.id] });
+      capture(ANALYTICS_EVENTS.BOOKMARK_REMOVED, { question_id: questionId });
       toast.success('Bookmark removed');
     },
     onError: (error) => {

@@ -8,6 +8,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
+import { usePostHog, ANALYTICS_EVENTS } from "@/hooks/usePostHog";
 
 type FlashcardMode = 'term-to-definition' | 'definition-to-term';
 
@@ -34,6 +35,7 @@ export function GlossaryFlashcards({ onBack }: GlossaryFlashcardsProps) {
   const [orderedTerms, setOrderedTerms] = useState<GlossaryTerm[]>([]);
   const [stats, setStats] = useState<CardStats>({ known: new Set(), unknown: new Set() });
   const [hasStarted, setHasStarted] = useState(false);
+  const { capture } = usePostHog();
 
   const { data: terms = [], isLoading } = useQuery({
     queryKey: ['glossary-terms'],
@@ -61,7 +63,12 @@ export function GlossaryFlashcards({ onBack }: GlossaryFlashcardsProps) {
     setIsFlipped(false);
     setStats({ known: new Set(), unknown: new Set() });
     setHasStarted(true);
-  }, [terms]);
+    
+    capture(ANALYTICS_EVENTS.FLASHCARD_SESSION_STARTED, { 
+      term_count: termsToStudy.length,
+      mode 
+    });
+  }, [terms, capture, mode]);
 
   const currentTerm = useMemo(() => {
     if (!hasStarted || orderedTerms.length === 0) return null;
@@ -91,6 +98,7 @@ export function GlossaryFlashcards({ onBack }: GlossaryFlashcardsProps) {
       newUnknown.delete(currentTerm.id);
       return { known: newKnown, unknown: newUnknown };
     });
+    capture(ANALYTICS_EVENTS.TERM_MARKED_KNOWN, { term: currentTerm.term });
     handleNext();
   };
 
@@ -103,6 +111,7 @@ export function GlossaryFlashcards({ onBack }: GlossaryFlashcardsProps) {
       newKnown.delete(currentTerm.id);
       return { known: newKnown, unknown: newUnknown };
     });
+    capture(ANALYTICS_EVENTS.TERM_MARKED_UNKNOWN, { term: currentTerm.term });
     handleNext();
   };
 

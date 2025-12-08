@@ -4,6 +4,7 @@ import { QuestionCard } from "@/components/QuestionCard";
 import { useQuestions, Question } from "@/hooks/useQuestions";
 import { useProgress } from "@/hooks/useProgress";
 import { useAuth } from "@/hooks/useAuth";
+import { usePostHog, ANALYTICS_EVENTS } from "@/hooks/usePostHog";
 import { supabase } from "@/integrations/supabase/client";
 import { Zap, SkipForward, RotateCcw, Loader2, Flame, Trophy, Award } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -25,6 +26,7 @@ export function RandomPractice({
   const {
     saveRandomAttempt
   } = useProgress();
+  const { capture } = usePostHog();
   const [question, setQuestion] = useState<Question | null>(null);
   const [selectedAnswer, setSelectedAnswer] = useState<'A' | 'B' | 'C' | 'D' | null>(null);
   const [showResult, setShowResult] = useState(false);
@@ -123,6 +125,14 @@ export function RandomPractice({
       total: prev.total + 1
     }));
 
+    // Track question answered
+    capture(ANALYTICS_EVENTS.QUESTION_ANSWERED, {
+      question_id: question.id,
+      is_correct: isCorrect,
+      subelement: question.subelement,
+      practice_type: 'random',
+    });
+
     // Update streak
     if (isCorrect) {
       setStreak(prev => {
@@ -134,6 +144,9 @@ export function RandomPractice({
           if (newStreak > allTimeBestStreak) {
             setAllTimeBestStreak(newStreak);
             saveBestStreak(newStreak);
+
+            // Track new best streak
+            capture(ANALYTICS_EVENTS.NEW_BEST_STREAK, { streak: newStreak });
 
             // Show special message for new all-time best
             if (newStreak > 1) {
@@ -149,6 +162,10 @@ export function RandomPractice({
         if (STREAK_MILESTONES.includes(newStreak)) {
           setCelebrationMilestone(newStreak);
           setShowStreakCelebration(true);
+          
+          // Track streak milestone
+          capture(ANALYTICS_EVENTS.STREAK_MILESTONE, { milestone: newStreak });
+          
           toast.success(getMilestoneMessage(newStreak), {
             icon: <Trophy className="w-5 h-5 text-primary" />,
             duration: 3000
