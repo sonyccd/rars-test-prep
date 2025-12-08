@@ -31,6 +31,7 @@ import {
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
 import { PracticeTest } from '@/components/PracticeTest';
 import { RandomPractice } from '@/components/RandomPractice';
 import { WeakQuestionsReview } from '@/components/WeakQuestionsReview';
@@ -309,275 +310,285 @@ export default function Dashboard() {
     const config = readinessConfig[readinessLevel];
     const ReadinessIcon = config.icon;
 
+    // Determine the best next action based on user's state
+    const getNextAction = () => {
+      // Priority 1: If never taken a test, start with a practice test
+      if (totalTests === 0) {
+        return {
+          title: "Take Your First Practice Test",
+          description: "See where you stand by taking a full practice exam. This will help identify your weak areas.",
+          action: () => setCurrentView('practice-test'),
+          actionLabel: "Start Practice Test",
+          icon: Target,
+          priority: 'start'
+        };
+      }
+
+      // Priority 2: If failing tests, focus on weak questions
+      if (weakQuestionIds.length > 5 && recentPassCount < 2) {
+        return {
+          title: "Review Your Weak Areas",
+          description: `You have ${weakQuestionIds.length} questions you've missed. Focus on these to boost your score.`,
+          action: () => setCurrentView('weak-questions'),
+          actionLabel: "Practice Weak Questions",
+          icon: Zap,
+          priority: 'weak'
+        };
+      }
+
+      // Priority 3: If close to passing, take more tests
+      if (readinessLevel === 'getting-close') {
+        return {
+          title: "Keep Testing - You're Almost There!",
+          description: "You're close to being exam-ready. Take a few more practice tests to build confidence.",
+          action: () => setCurrentView('practice-test'),
+          actionLabel: "Take Practice Test",
+          icon: TrendingUp,
+          priority: 'practice'
+        };
+      }
+
+      // Priority 4: If ready, celebrate and suggest real exam
+      if (readinessLevel === 'ready') {
+        return {
+          title: "You're Ready for the Real Exam!",
+          description: "Your scores show you're prepared. Schedule your exam or take one more practice test.",
+          action: () => setCurrentView('practice-test'),
+          actionLabel: "One More Practice Test",
+          icon: CheckCircle,
+          priority: 'ready'
+        };
+      }
+
+      // Default: Continue studying
+      return {
+        title: "Continue Your Study Session",
+        description: "Practice makes perfect. Jump into random questions or focus on specific topics.",
+        action: () => setCurrentView('random-practice'),
+        actionLabel: "Random Practice",
+        icon: Brain,
+        priority: 'default'
+      };
+    };
+
+    const nextAction = getNextAction();
+    const NextActionIcon = nextAction.icon;
+
+    // Calculate glossary stats for the compact display
+    const totalTerms = glossaryTerms.length;
+    const masteredTerms = glossaryProgress.filter(p => p.mastered).length;
+    const glossaryPercentage = totalTerms > 0 ? Math.round((masteredTerms / totalTerms) * 100) : 0;
+
     return (
       <div className="flex-1 overflow-y-auto py-8 md:py-12 px-4 md:px-8 radio-wave-bg">
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-3xl mx-auto">
 
-          {/* Test Readiness Indicator */}
+          {/* Next Action Card - Primary Focus */}
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             className={cn(
-              "rounded-xl p-4 mb-6 border",
-              config.bg,
-              config.border
+              "rounded-xl p-6 mb-6 border-2",
+              nextAction.priority === 'ready' ? "bg-success/10 border-success/40" :
+              nextAction.priority === 'weak' ? "bg-orange-500/10 border-orange-500/40" :
+              "bg-primary/10 border-primary/40"
             )}
           >
-            <div className="flex items-center gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-4">
               <div className={cn(
-                "w-12 h-12 rounded-full flex items-center justify-center shrink-0",
-                readinessLevel === 'ready' ? 'bg-success/20' : 
-                readinessLevel === 'getting-close' ? 'bg-primary/20' : 'bg-secondary'
+                "w-14 h-14 rounded-full flex items-center justify-center shrink-0",
+                nextAction.priority === 'ready' ? 'bg-success/20' :
+                nextAction.priority === 'weak' ? 'bg-orange-500/20' :
+                'bg-primary/20'
               )}>
-                <ReadinessIcon className={cn("w-6 h-6", config.color)} />
+                <NextActionIcon className={cn(
+                  "w-7 h-7",
+                  nextAction.priority === 'ready' ? 'text-success' :
+                  nextAction.priority === 'weak' ? 'text-orange-500' :
+                  'text-primary'
+                )} />
               </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between gap-2 mb-1">
-                  <h2 className={cn("font-mono font-bold", config.color)}>
-                    {readinessLevel === 'not-started' ? 'Test Readiness' :
-                     readinessLevel === 'needs-work' ? 'Keep Studying' :
-                     readinessLevel === 'getting-close' ? 'Almost Ready' :
-                     'Ready to Test!'}
-                  </h2>
-                  {totalTests > 0 && (
-                    <span className="text-sm font-mono text-muted-foreground">
-                      {recentAvgScore}% avg
-                    </span>
-                  )}
-                </div>
-                <p className="text-sm text-muted-foreground mb-2">{readinessMessage}</p>
-                <div className="h-2 bg-secondary rounded-full overflow-hidden">
-                  <motion.div 
-                    initial={{ width: 0 }}
-                    animate={{ width: `${config.progress}%` }}
-                    transition={{ duration: 0.5, delay: 0.2 }}
-                    className={cn(
-                      "h-full rounded-full",
-                      readinessLevel === 'ready' ? 'bg-success' :
-                      readinessLevel === 'getting-close' ? 'bg-primary' :
-                      'bg-muted-foreground/30'
-                    )}
-                  />
-                </div>
+              <div className="flex-1">
+                <h2 className="text-lg font-bold text-foreground mb-1">{nextAction.title}</h2>
+                <p className="text-sm text-muted-foreground">{nextAction.description}</p>
               </div>
+              <Button 
+                size="lg" 
+                onClick={nextAction.action}
+                className={cn(
+                  "shrink-0 gap-2",
+                  nextAction.priority === 'ready' && "bg-success hover:bg-success/90",
+                  nextAction.priority === 'weak' && "bg-orange-500 hover:bg-orange-600"
+                )}
+              >
+                {nextAction.actionLabel}
+                <ArrowRight className="w-4 h-4" />
+              </Button>
             </div>
           </motion.div>
 
-          {/* Stats Grid */}
+          {/* Key Metrics - Compact Row */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6"
+            className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6"
           >
-            <div className="bg-card border border-border rounded-xl p-4">
-              <div className="flex items-center gap-2 mb-2">
-                <Trophy className="w-4 h-4 text-primary" />
-                <span className="text-xs text-muted-foreground">Tests</span>
-              </div>
-              <p className="text-2xl font-mono font-bold text-foreground">{totalTests}</p>
+            <div className="bg-card border border-border rounded-xl p-3 text-center">
+              <p className="text-2xl font-mono font-bold text-foreground">{overallAccuracy}%</p>
+              <p className="text-xs text-muted-foreground">Accuracy</p>
             </div>
-
-            <div className="bg-card border border-border rounded-xl p-4">
-              <div className="flex items-center gap-2 mb-2">
-                <Target className="w-4 h-4 text-success" />
-                <span className="text-xs text-muted-foreground">Passed</span>
-              </div>
-              <p className="text-2xl font-mono font-bold text-success">{passedTests}</p>
+            <div className="bg-card border border-border rounded-xl p-3 text-center">
+              <p className="text-2xl font-mono font-bold text-success">{passedTests}/{totalTests}</p>
+              <p className="text-xs text-muted-foreground">Tests Passed</p>
             </div>
-
-            <div className="bg-card border border-border rounded-xl p-4">
-              <div className="flex items-center gap-2 mb-2">
-                <TrendingUp className="w-4 h-4 text-accent" />
-                <span className="text-xs text-muted-foreground">Avg Score</span>
-              </div>
-              <p className="text-2xl font-mono font-bold text-foreground">{avgScore}%</p>
+            <div className="bg-card border border-border rounded-xl p-3 text-center">
+              <p className={cn(
+                "text-2xl font-mono font-bold",
+                weakQuestionIds.length > 10 ? "text-orange-500" : "text-foreground"
+              )}>{weakQuestionIds.length}</p>
+              <p className="text-xs text-muted-foreground">Weak Questions</p>
             </div>
-
-            <div className="bg-card border border-border rounded-xl p-4">
-              <div className="flex items-center gap-2 mb-2">
-                <Zap className="w-4 h-4 text-primary" />
-                <span className="text-xs text-muted-foreground">Questions</span>
+            <div className="bg-card border border-border rounded-xl p-3 text-center">
+              <div className="flex items-center justify-center gap-1">
+                <p className={cn(
+                  "text-2xl font-mono font-bold",
+                  (profile?.best_streak || 0) > 0 ? "text-orange-500" : "text-muted-foreground"
+                )}>{profile?.best_streak || 0}</p>
+                {(profile?.best_streak || 0) > 0 && <Flame className="w-5 h-5 text-orange-500" />}
               </div>
-              <p className="text-2xl font-mono font-bold text-foreground">{totalAttempts}</p>
-            </div>
-
-            <div className="bg-card border border-border rounded-xl p-4">
-              <div className="flex items-center gap-2 mb-2">
-                <Flame className="w-4 h-4 text-primary" />
-                <span className="text-xs text-muted-foreground">Best Streak</span>
-              </div>
-              <p className="text-2xl font-mono font-bold text-primary">{profile?.best_streak || 0}</p>
+              <p className="text-xs text-muted-foreground">Best Streak</p>
             </div>
           </motion.div>
 
-          {/* Accuracy Bar */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.15 }}
-            className="bg-card border border-border rounded-xl p-4 mb-6"
-          >
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm text-muted-foreground">Overall Accuracy</span>
-              <span className="text-lg font-mono font-bold text-primary">{overallAccuracy}%</span>
-            </div>
-            <div className="h-3 bg-secondary rounded-full overflow-hidden">
-              <div 
-                className="h-full bg-gradient-to-r from-primary to-success transition-all duration-500"
-                style={{ width: `${overallAccuracy}%` }}
-              />
-            </div>
-            <div className="flex items-center gap-4 mt-2 text-xs">
-              <span className="flex items-center gap-1 text-success">
-                <CheckCircle className="w-3 h-3" /> {correctAttempts}
-              </span>
-              <span className="flex items-center gap-1 text-destructive">
-                <XCircle className="w-3 h-3" /> {totalAttempts - correctAttempts}
-              </span>
-            </div>
-          </motion.div>
+          {/* Two Column Layout: Recent Performance + Weak Areas */}
+          <div className="grid md:grid-cols-2 gap-4 mb-6">
+            {/* Recent Performance Trend */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.15 }}
+              className="bg-card border border-border rounded-xl p-4"
+            >
+              <h3 className="text-sm font-mono font-bold text-foreground mb-3">Recent Performance</h3>
+              {recentTests.length === 0 ? (
+                <p className="text-sm text-muted-foreground py-4 text-center">
+                  No tests yet. Take your first practice test!
+                </p>
+              ) : (
+                <div className="space-y-2">
+                  {recentTests.slice(0, 3).map((test, index) => (
+                    <button 
+                      key={test.id}
+                      onClick={() => {
+                        setReviewingTestId(test.id);
+                        setCurrentView('review-test');
+                      }}
+                      className={cn(
+                        "w-full flex items-center justify-between p-2 rounded-lg transition-colors",
+                        "hover:bg-secondary/50"
+                      )}
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className={cn(
+                          "w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold",
+                          test.passed 
+                            ? "bg-success text-success-foreground" 
+                            : "bg-destructive text-destructive-foreground"
+                        )}>
+                          {test.passed ? '✓' : '✗'}
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          {new Date(test.completed_at).toLocaleDateString()}
+                        </span>
+                      </div>
+                      <span className={cn(
+                        "text-sm font-mono font-bold",
+                        test.passed ? "text-success" : "text-destructive"
+                      )}>
+                        {test.percentage}%
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </motion.div>
 
-          {/* Recent Tests */}
-          {recentTests.length > 0 && (
+            {/* Weak Areas Summary */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
               className="bg-card border border-border rounded-xl p-4"
             >
-              <h2 className="text-sm font-mono font-bold text-foreground mb-3">Recent Tests</h2>
-              <div className="space-y-2">
-                {recentTests.map((test) => (
-                  <button 
-                    key={test.id}
-                    onClick={() => {
-                      setReviewingTestId(test.id);
-                      setCurrentView('review-test');
-                    }}
-                    className={cn(
-                      "w-full flex items-center justify-between p-3 rounded-lg border transition-colors cursor-pointer",
-                      test.passed 
-                        ? "border-success/30 bg-success/5 hover:bg-success/10" 
-                        : "border-destructive/30 bg-destructive/5 hover:bg-destructive/10"
-                    )}
+              <h3 className="text-sm font-mono font-bold text-foreground mb-3">Areas to Improve</h3>
+              {weakQuestionIds.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-4 text-center">
+                  <CheckCircle className="w-8 h-8 text-success mb-2" />
+                  <p className="text-sm text-muted-foreground">
+                    No weak areas detected yet!
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground">Questions to review</span>
+                    <span className="text-lg font-mono font-bold text-orange-500">{weakQuestionIds.length}</span>
+                  </div>
+                  <Button 
+                    variant="outline" 
+                    className="w-full gap-2 border-orange-500/30 text-orange-500 hover:bg-orange-500/10"
+                    onClick={() => setCurrentView('weak-questions')}
                   >
-                    <div className="flex items-center gap-3">
-                      <span className={cn(
-                        "w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold",
-                        test.passed 
-                          ? "bg-success text-success-foreground" 
-                          : "bg-destructive text-destructive-foreground"
-                      )}>
-                        {test.passed ? '✓' : '✗'}
-                      </span>
-                      <div className="text-left">
-                        <p className="text-sm font-medium text-foreground">
-                          {test.score}/{test.total_questions}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {new Date(test.completed_at).toLocaleDateString()}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className={cn(
-                        "text-lg font-mono font-bold",
-                        test.passed ? "text-success" : "text-destructive"
-                      )}>
-                        {test.percentage}%
-                      </span>
-                      <ArrowRight className="w-4 h-4 text-muted-foreground" />
-                    </div>
-                  </button>
-                ))}
-              </div>
+                    <Zap className="w-4 h-4" />
+                    Review Weak Questions
+                  </Button>
+                </div>
+              )}
             </motion.div>
-          )}
+          </div>
 
-          {/* Glossary Progress */}
+          {/* Glossary Progress - Compact */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.25 }}
-            className="bg-card border border-border rounded-xl p-4 mt-6"
+            className="bg-card border border-border rounded-xl p-4"
           >
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="text-sm font-mono font-bold text-foreground flex items-center gap-2">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
                 <BookText className="w-4 h-4 text-primary" />
-                Glossary Mastery
-              </h2>
-              <button
-                onClick={() => setCurrentView('glossary-flashcards')}
-                className="text-xs text-primary hover:underline flex items-center gap-1"
-              >
-                <Brain className="w-3 h-3" />
-                Study Flashcards
-              </button>
+                <h3 className="text-sm font-mono font-bold text-foreground">Glossary</h3>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className="text-sm text-muted-foreground">
+                  {masteredTerms}/{totalTerms} terms
+                </span>
+                {(glossaryStreak?.glossary_current_streak || 0) > 0 && (
+                  <span className="flex items-center gap-1 text-orange-500 text-sm font-bold">
+                    {glossaryStreak?.glossary_current_streak}
+                    <Flame className="w-4 h-4" />
+                  </span>
+                )}
+                <Button 
+                  size="sm" 
+                  variant="outline"
+                  onClick={() => setCurrentView('glossary-flashcards')}
+                  className="gap-1"
+                >
+                  <Brain className="w-3 h-3" />
+                  Study
+                </Button>
+              </div>
             </div>
-            
-            {(() => {
-              const totalTerms = glossaryTerms.length;
-              const masteredTerms = glossaryProgress.filter(p => p.mastered).length;
-              const weakTerms = glossaryProgress.filter(p => {
-                if (p.mastered) return false;
-                if (p.times_seen < 2) return false;
-                const accuracy = p.times_correct / p.times_seen;
-                return accuracy < 0.6;
-              }).length;
-              const seenTerms = glossaryProgress.length;
-              const unseenTerms = totalTerms - seenTerms;
-              const masteryPercentage = totalTerms > 0 ? Math.round((masteredTerms / totalTerms) * 100) : 0;
-
-              return (
-                <>
-                  <div className="flex items-center justify-between text-xs text-muted-foreground mb-2">
-                    <span>{masteredTerms} of {totalTerms} terms mastered</span>
-                    <span className="font-mono font-bold text-primary">{masteryPercentage}%</span>
-                  </div>
-                  <div className="h-3 bg-secondary rounded-full overflow-hidden mb-3">
-                    <div 
-                      className="h-full bg-gradient-to-r from-primary to-success transition-all duration-500"
-                      style={{ width: `${masteryPercentage}%` }}
-                    />
-                  </div>
-                  <div className="grid grid-cols-4 gap-2 text-center">
-                    <div className="bg-primary/10 rounded-lg p-2">
-                      <div className="text-lg font-mono font-bold text-primary">{masteredTerms}</div>
-                      <div className="text-xs text-muted-foreground">Mastered</div>
-                    </div>
-                    <div className="bg-orange-500/10 rounded-lg p-2">
-                      <div className="text-lg font-mono font-bold text-orange-500">{weakTerms}</div>
-                      <div className="text-xs text-muted-foreground">Need Work</div>
-                    </div>
-                    <div className="bg-secondary rounded-lg p-2">
-                      <div className="text-lg font-mono font-bold text-muted-foreground">{unseenTerms}</div>
-                      <div className="text-xs text-muted-foreground">Unseen</div>
-                    </div>
-                    <div className={cn(
-                      "rounded-lg p-2",
-                      (glossaryStreak?.glossary_current_streak || 0) > 0 
-                        ? "bg-orange-500/10" 
-                        : "bg-secondary"
-                    )}>
-                      <div className={cn(
-                        "text-lg font-mono font-bold flex items-center justify-center gap-1",
-                        (glossaryStreak?.glossary_current_streak || 0) > 0 
-                          ? "text-orange-500" 
-                          : "text-muted-foreground"
-                      )}>
-                        {glossaryStreak?.glossary_current_streak || 0}
-                        {(glossaryStreak?.glossary_current_streak || 0) > 0 && (
-                          <Flame className="w-4 h-4" />
-                        )}
-                      </div>
-                      <div className="text-xs text-muted-foreground">Day Streak</div>
-                    </div>
-                  </div>
-                </>
-              );
-            })()}
+            <div className="h-2 bg-secondary rounded-full overflow-hidden">
+              <div 
+                className="h-full bg-gradient-to-r from-primary to-success transition-all duration-500"
+                style={{ width: `${glossaryPercentage}%` }}
+              />
+            </div>
           </motion.div>
+
         </div>
       </div>
     );
