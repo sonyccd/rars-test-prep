@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { QuestionCard } from "@/components/QuestionCard";
 import { useQuestions, Question } from "@/hooks/useQuestions";
 import { useProgress } from "@/hooks/useProgress";
+import { usePostHog, ANALYTICS_EVENTS } from "@/hooks/usePostHog";
 import { BookOpen, SkipForward, RotateCcw, Loader2, ChevronRight, CheckCircle, ArrowLeft } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -34,6 +35,7 @@ export function SubelementPractice({
   const {
     saveRandomAttempt
   } = useProgress();
+  const { capture } = usePostHog();
   const [selectedSubelement, setSelectedSubelement] = useState<string | null>(null);
   const [topicView, setTopicView] = useState<TopicView>('list');
   const [question, setQuestion] = useState<Question | null>(null);
@@ -82,10 +84,19 @@ export function SubelementPractice({
       total: 0
     });
     setAskedIds([]);
+    
+    capture(ANALYTICS_EVENTS.TOPIC_SELECTED, { 
+      subelement: sub, 
+      topic_name: SUBELEMENT_NAMES[sub] || sub 
+    });
   };
   const handleStartPractice = () => {
     setTopicView('practice');
     setQuestion(getRandomQuestion());
+    capture(ANALYTICS_EVENTS.SUBELEMENT_PRACTICE_STARTED, { 
+      subelement: selectedSubelement,
+      topic_name: SUBELEMENT_NAMES[selectedSubelement || ''] || selectedSubelement 
+    });
   };
   const handleBackToLanding = () => {
     setTopicView('landing');
