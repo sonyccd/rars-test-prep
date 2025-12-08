@@ -10,7 +10,6 @@ import {
   PanelLeft,
   BarChart3,
   Menu,
-  User
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -21,6 +20,7 @@ import {
 } from "@/components/ui/tooltip";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { useState } from "react";
 
 type View = 'dashboard' | 'practice-test' | 'random-practice' | 'weak-questions' | 'bookmarks' | 'subelement-practice' | 'review-test';
@@ -251,36 +251,54 @@ export function DashboardSidebar({
           )}
         </div>
 
-        {/* Sign Out Button */}
-        <div className="p-2">
+        {/* Theme Toggle & Sign Out */}
+        <div className="p-2 space-y-1">
           {!isMobile && isCollapsed ? (
-            <Tooltip delayDuration={0}>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={onSignOut}
-                  className="w-full h-10 text-muted-foreground hover:text-destructive"
-                >
-                  <LogOut className="w-5 h-5" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="right" className="bg-popover border-border">
-                <p>Sign Out</p>
-              </TooltipContent>
-            </Tooltip>
+            <>
+              <Tooltip delayDuration={0}>
+                <TooltipTrigger asChild>
+                  <div className="flex justify-center">
+                    <ThemeToggle />
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent side="right" className="bg-popover border-border">
+                  <p>Toggle Theme</p>
+                </TooltipContent>
+              </Tooltip>
+              <Tooltip delayDuration={0}>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={onSignOut}
+                    className="w-full h-10 text-muted-foreground hover:text-destructive"
+                  >
+                    <LogOut className="w-5 h-5" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="right" className="bg-popover border-border">
+                  <p>Sign Out</p>
+                </TooltipContent>
+              </Tooltip>
+            </>
           ) : (
-            <Button
-              variant="ghost"
-              onClick={() => {
-                onSignOut();
-                setMobileOpen(false);
-              }}
-              className="w-full justify-start gap-3 text-muted-foreground hover:text-destructive"
-            >
-              <LogOut className="w-5 h-5" />
-              <span className="text-sm font-medium">Sign Out</span>
-            </Button>
+            <>
+              <div className="flex items-center justify-between px-3 py-2">
+                <span className="text-sm text-muted-foreground">Theme</span>
+                <ThemeToggle />
+              </div>
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  onSignOut();
+                  setMobileOpen(false);
+                }}
+                className="w-full justify-start gap-3 text-muted-foreground hover:text-destructive"
+              >
+                <LogOut className="w-5 h-5" />
+                <span className="text-sm font-medium">Sign Out</span>
+              </Button>
+            </>
           )}
         </div>
       </div>
