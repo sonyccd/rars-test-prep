@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/useAuth';
 import { useBookmarks } from '@/hooks/useBookmarks';
 import { useAppNavigation } from '@/hooks/useAppNavigation';
 import { supabase } from '@/integrations/supabase/client';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Trophy, Target, Zap, TrendingUp, CheckCircle, XCircle, Loader2, ArrowRight, AlertTriangle, Flame, Brain, CalendarDays } from 'lucide-react';
+import { Target, Zap, TrendingUp, CheckCircle, Loader2, AlertTriangle, Flame, Brain, CalendarDays, Settings2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -19,6 +19,7 @@ import { TestResultReview } from '@/components/TestResultReview';
 import { AppLayout } from '@/components/AppLayout';
 import { Glossary } from '@/components/Glossary';
 import { GlossaryFlashcards } from '@/components/GlossaryFlashcards';
+import { WeeklyGoalsModal } from '@/components/WeeklyGoalsModal';
 import { TestType, testTypes } from '@/components/DashboardSidebar';
 export default function Dashboard() {
   const {
@@ -29,6 +30,7 @@ export default function Dashboard() {
     bookmarks
   } = useBookmarks();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const {
     currentView,
     setCurrentView,
@@ -39,6 +41,7 @@ export default function Dashboard() {
   const [testInProgress, setTestInProgress] = useState(false);
   const [pendingView, setPendingView] = useState<typeof currentView | null>(null);
   const [showNavigationWarning, setShowNavigationWarning] = useState(false);
+  const [showGoalsModal, setShowGoalsModal] = useState(false);
   useEffect(() => {
     if (!authLoading && !user) {
       navigate('/');
@@ -355,7 +358,7 @@ export default function Dashboard() {
 
     // Calculate weekly goal progress
     const questionsGoal = weeklyGoals?.questions_goal || 50;
-    const testsGoal = weeklyGoals?.tests_goal || 3;
+    const testsGoal = weeklyGoals?.tests_goal || 2;
     const questionsProgress = Math.min(100, Math.round(thisWeekQuestions / questionsGoal * 100));
     const testsProgress = Math.min(100, Math.round(thisWeekTests / testsGoal * 100));
     return <div className="flex-1 overflow-y-auto py-8 md:py-12 px-4 md:px-8 radio-wave-bg">
@@ -418,9 +421,19 @@ export default function Dashboard() {
                 <CalendarDays className="w-4 h-4 text-primary" />
                 <h3 className="text-sm font-mono font-bold text-foreground">This Week</h3>
               </div>
-              <span className="text-xs text-muted-foreground">
-                Resets Sunday
-              </span>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-muted-foreground">
+                  Resets Sunday
+                </span>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-6 w-6"
+                  onClick={() => setShowGoalsModal(true)}
+                >
+                  <Settings2 className="w-3.5 h-3.5" />
+                </Button>
+              </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
@@ -589,6 +602,17 @@ export default function Dashboard() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Weekly Goals Modal */}
+      {user && (
+        <WeeklyGoalsModal
+          open={showGoalsModal}
+          onOpenChange={setShowGoalsModal}
+          userId={user.id}
+          currentGoals={weeklyGoals || null}
+          onGoalsUpdated={() => queryClient.invalidateQueries({ queryKey: ['weekly-goals', user.id] })}
+        />
+      )}
 
       <AppLayout currentView={currentView} onViewChange={handleViewChange} selectedTest={selectedTest} onTestChange={setSelectedTest}>
         {renderContent()}
