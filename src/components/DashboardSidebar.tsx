@@ -5,6 +5,16 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { ProfileModal } from "@/components/ProfileModal";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useState } from "react";
 type View = 'dashboard' | 'practice-test' | 'random-practice' | 'weak-questions' | 'bookmarks' | 'subelement-practice' | 'review-test';
 interface NavItem {
@@ -46,6 +56,7 @@ export function DashboardSidebar({
 }: DashboardSidebarProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [profileModalOpen, setProfileModalOpen] = useState(false);
+  const [signOutDialogOpen, setSignOutDialogOpen] = useState(false);
   const getInitials = () => {
     if (userInfo?.displayName) {
       return userInfo.displayName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
@@ -180,17 +191,14 @@ export function DashboardSidebar({
         <div className="p-2">
           {!isMobile && isCollapsed ? <Tooltip delayDuration={0}>
               <TooltipTrigger asChild>
-                <Button variant="ghost" size="icon" onClick={onSignOut} className="w-full h-10 text-muted-foreground hover:text-destructive">
+                <Button variant="ghost" size="icon" onClick={() => setSignOutDialogOpen(true)} className="w-full h-10 text-muted-foreground hover:text-destructive">
                   <LogOut className="w-5 h-5" />
                 </Button>
               </TooltipTrigger>
               <TooltipContent side="right" className="bg-popover border-border">
                 <p>Sign Out</p>
               </TooltipContent>
-            </Tooltip> : <Button variant="ghost" onClick={() => {
-          onSignOut();
-          setMobileOpen(false);
-        }} className="w-full justify-start gap-3 text-muted-foreground hover:text-destructive">
+            </Tooltip> : <Button variant="ghost" onClick={() => setSignOutDialogOpen(true)} className="w-full justify-start gap-3 text-muted-foreground hover:text-destructive">
               <LogOut className="w-5 h-5" />
               <span className="text-sm font-medium">Sign Out</span>
             </Button>}
@@ -198,6 +206,27 @@ export function DashboardSidebar({
       </div>
     </>;
   return <>
+      {/* Sign Out Confirmation Dialog */}
+      <AlertDialog open={signOutDialogOpen} onOpenChange={setSignOutDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Sign out?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to sign out of your account?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={() => {
+              onSignOut();
+              setMobileOpen(false);
+            }}>
+              Sign Out
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       {/* Profile Modal */}
       {userId && userInfo && onProfileUpdate && <ProfileModal open={profileModalOpen} onOpenChange={setProfileModalOpen} userInfo={{
       displayName: userInfo.displayName,
