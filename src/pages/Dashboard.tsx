@@ -25,7 +25,9 @@ import {
   Loader2,
   ArrowRight,
   AlertTriangle,
-  Flame
+  Flame,
+  BookText,
+  Brain
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -94,6 +96,34 @@ export default function Dashboard() {
         .select('best_streak')
         .eq('id', user!.id)
         .maybeSingle();
+      
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user,
+  });
+
+  // Fetch glossary terms count
+  const { data: glossaryTerms = [] } = useQuery({
+    queryKey: ['glossary-terms-count'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('glossary_terms')
+        .select('id');
+      
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  // Fetch glossary progress
+  const { data: glossaryProgress = [] } = useQuery({
+    queryKey: ['glossary-progress', user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('glossary_progress')
+        .select('*')
+        .eq('user_id', user!.id);
       
       if (error) throw error;
       return data;
@@ -448,6 +478,71 @@ export default function Dashboard() {
               </div>
             </motion.div>
           )}
+
+          {/* Glossary Progress */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.25 }}
+            className="bg-card border border-border rounded-xl p-4 mt-6"
+          >
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-sm font-mono font-bold text-foreground flex items-center gap-2">
+                <BookText className="w-4 h-4 text-primary" />
+                Glossary Mastery
+              </h2>
+              <button
+                onClick={() => setCurrentView('glossary-flashcards')}
+                className="text-xs text-primary hover:underline flex items-center gap-1"
+              >
+                <Brain className="w-3 h-3" />
+                Study Flashcards
+              </button>
+            </div>
+            
+            {(() => {
+              const totalTerms = glossaryTerms.length;
+              const masteredTerms = glossaryProgress.filter(p => p.mastered).length;
+              const weakTerms = glossaryProgress.filter(p => {
+                if (p.mastered) return false;
+                if (p.times_seen < 2) return false;
+                const accuracy = p.times_correct / p.times_seen;
+                return accuracy < 0.6;
+              }).length;
+              const seenTerms = glossaryProgress.length;
+              const unseenTerms = totalTerms - seenTerms;
+              const masteryPercentage = totalTerms > 0 ? Math.round((masteredTerms / totalTerms) * 100) : 0;
+
+              return (
+                <>
+                  <div className="flex items-center justify-between text-xs text-muted-foreground mb-2">
+                    <span>{masteredTerms} of {totalTerms} terms mastered</span>
+                    <span className="font-mono font-bold text-primary">{masteryPercentage}%</span>
+                  </div>
+                  <div className="h-3 bg-secondary rounded-full overflow-hidden mb-3">
+                    <div 
+                      className="h-full bg-gradient-to-r from-primary to-success transition-all duration-500"
+                      style={{ width: `${masteryPercentage}%` }}
+                    />
+                  </div>
+                  <div className="grid grid-cols-3 gap-2 text-center">
+                    <div className="bg-primary/10 rounded-lg p-2">
+                      <div className="text-lg font-mono font-bold text-primary">{masteredTerms}</div>
+                      <div className="text-xs text-muted-foreground">Mastered</div>
+                    </div>
+                    <div className="bg-orange-500/10 rounded-lg p-2">
+                      <div className="text-lg font-mono font-bold text-orange-500">{weakTerms}</div>
+                      <div className="text-xs text-muted-foreground">Need Work</div>
+                    </div>
+                    <div className="bg-secondary rounded-lg p-2">
+                      <div className="text-lg font-mono font-bold text-muted-foreground">{unseenTerms}</div>
+                      <div className="text-xs text-muted-foreground">Unseen</div>
+                    </div>
+                  </div>
+                </>
+              );
+            })()}
+          </motion.div>
         </div>
       </div>
     );
