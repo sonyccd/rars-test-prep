@@ -238,7 +238,7 @@ export default function Dashboard() {
     const ReadinessIcon = config.icon;
 
     return (
-      <div className="min-h-screen py-6 px-4 md:px-8 radio-wave-bg">
+      <div className="min-h-screen py-8 md:py-12 px-4 md:px-8 radio-wave-bg">
         <div className="max-w-4xl mx-auto">
 
           {/* Test Readiness Indicator */}
