@@ -4,14 +4,23 @@ import { QuestionCard } from "@/components/QuestionCard";
 import { useQuestions, Question } from "@/hooks/useQuestions";
 import { useProgress } from "@/hooks/useProgress";
 import { usePostHog, ANALYTICS_EVENTS } from "@/hooks/usePostHog";
-import { BookOpen, SkipForward, RotateCcw, Loader2, ChevronRight, CheckCircle, ArrowLeft } from "lucide-react";
+import { BookOpen, SkipForward, RotateCcw, Loader2, ChevronRight, CheckCircle, ArrowLeft, ChevronLeft } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { TopicLanding } from "@/components/TopicLanding";
+
+interface HistoryEntry {
+  question: Question;
+  selectedAnswer: 'A' | 'B' | 'C' | 'D' | null;
+  showResult: boolean;
+}
+
 interface SubelementPracticeProps {
   onBack: () => void;
 }
+
 type TopicView = 'list' | 'landing' | 'practice';
+
 const SUBELEMENT_NAMES: Record<string, string> = {
   T0: "Commission's Rules",
   T1: "Operating Procedures",
@@ -24,6 +33,7 @@ const SUBELEMENT_NAMES: Record<string, string> = {
   T8: "Operating Activities",
   T9: "Antennas & Feed Lines"
 };
+
 export function SubelementPractice({
   onBack
 }: SubelementPracticeProps) {
@@ -36,16 +46,24 @@ export function SubelementPractice({
     saveRandomAttempt
   } = useProgress();
   const { capture } = usePostHog();
+  
   const [selectedSubelement, setSelectedSubelement] = useState<string | null>(null);
   const [topicView, setTopicView] = useState<TopicView>('list');
-  const [question, setQuestion] = useState<Question | null>(null);
-  const [selectedAnswer, setSelectedAnswer] = useState<'A' | 'B' | 'C' | 'D' | null>(null);
-  const [showResult, setShowResult] = useState(false);
   const [stats, setStats] = useState({
     correct: 0,
     total: 0
   });
   const [askedIds, setAskedIds] = useState<string[]>([]);
+  
+  // Session history for back navigation
+  const [questionHistory, setQuestionHistory] = useState<HistoryEntry[]>([]);
+  const [historyIndex, setHistoryIndex] = useState(-1);
+
+  // Current question from history
+  const currentEntry = historyIndex >= 0 ? questionHistory[historyIndex] : null;
+  const question = currentEntry?.question || null;
+  const selectedAnswer = currentEntry?.selectedAnswer || null;
+  const showResult = currentEntry?.showResult || false;
 
   // Group questions by subelement
   const questionsBySubelement = useMemo(() => {
@@ -56,10 +74,13 @@ export function SubelementPractice({
       return acc;
     }, {} as Record<string, Question[]>);
   }, [allQuestions]);
+
   const subelements = useMemo(() => {
     return Object.keys(questionsBySubelement).sort();
   }, [questionsBySubelement]);
+
   const currentQuestions = selectedSubelement ? questionsBySubelement[selectedSubelement] || [] : [];
+
   const getRandomQuestion = useCallback((excludeIds: string[] = []): Question | null => {
     if (currentQuestions.length === 0) return null;
     const available = currentQuestions.filter(q => !excludeIds.includes(q.id));
@@ -68,17 +89,23 @@ export function SubelementPractice({
     }
     return available[Math.floor(Math.random() * available.length)];
   }, [currentQuestions]);
-  useEffect(() => {
-    if (selectedSubelement && topicView === 'practice' && currentQuestions.length > 0 && !question) {
-      setQuestion(getRandomQuestion());
-    }
-  }, [selectedSubelement, topicView, currentQuestions, question, getRandomQuestion]);
+
+  // Update current entry in history
+  const updateCurrentEntry = (updates: Partial<HistoryEntry>) => {
+    setQuestionHistory(prev => {
+      const newHistory = [...prev];
+      if (historyIndex >= 0 && historyIndex < newHistory.length) {
+        newHistory[historyIndex] = { ...newHistory[historyIndex], ...updates };
+      }
+      return newHistory;
+    });
+  };
+
   const handleSelectSubelement = (sub: string) => {
     setSelectedSubelement(sub);
     setTopicView('landing');
-    setQuestion(null);
-    setSelectedAnswer(null);
-    setShowResult(false);
+    setQuestionHistory([]);
+    setHistoryIndex(-1);
     setStats({
       correct: 0,
       total: 0
@@ -90,32 +117,38 @@ export function SubelementPractice({
       topic_name: SUBELEMENT_NAMES[sub] || sub 
     });
   };
+
   const handleStartPractice = () => {
     setTopicView('practice');
-    setQuestion(getRandomQuestion());
+    const firstQuestion = getRandomQuestion();
+    if (firstQuestion) {
+      setQuestionHistory([{ question: firstQuestion, selectedAnswer: null, showResult: false }]);
+      setHistoryIndex(0);
+    }
     capture(ANALYTICS_EVENTS.SUBELEMENT_PRACTICE_STARTED, { 
       subelement: selectedSubelement,
       topic_name: SUBELEMENT_NAMES[selectedSubelement || ''] || selectedSubelement 
     });
   };
+
   const handleBackToLanding = () => {
     setTopicView('landing');
-    setQuestion(null);
-    setSelectedAnswer(null);
-    setShowResult(false);
+    setQuestionHistory([]);
+    setHistoryIndex(-1);
   };
+
   const handleBackToList = () => {
     setSelectedSubelement(null);
     setTopicView('list');
-    setQuestion(null);
-    setSelectedAnswer(null);
-    setShowResult(false);
+    setQuestionHistory([]);
+    setHistoryIndex(-1);
     setStats({
       correct: 0,
       total: 0
     });
     setAskedIds([]);
   };
+
   if (isLoading) {
     return <div className="flex-1 bg-background flex items-center justify-center">
         <div className="text-center">
@@ -124,6 +157,7 @@ export function SubelementPractice({
         </div>
       </div>;
   }
+
   if (error || !allQuestions || allQuestions.length === 0) {
     return <div className="flex-1 bg-background flex items-center justify-center">
         <div className="text-center">
@@ -202,10 +236,12 @@ export function SubelementPractice({
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>;
   }
+
   const handleSelectAnswer = async (answer: 'A' | 'B' | 'C' | 'D') => {
     if (showResult) return;
-    setSelectedAnswer(answer);
-    setShowResult(true);
+    
+    updateCurrentEntry({ selectedAnswer: answer, showResult: true });
+    
     const isCorrect = answer === question.correctAnswer;
     setStats(prev => ({
       correct: prev.correct + (isCorrect ? 1 : 0),
@@ -213,32 +249,58 @@ export function SubelementPractice({
     }));
     await saveRandomAttempt(question, answer);
   };
+
   const handleNextQuestion = () => {
+    // If we're not at the end of history, just move forward
+    if (historyIndex < questionHistory.length - 1) {
+      setHistoryIndex(historyIndex + 1);
+      return;
+    }
+    
+    // Otherwise, get a new question
     const newAskedIds = [...askedIds, question.id];
     setAskedIds(newAskedIds);
-    setQuestion(getRandomQuestion(newAskedIds));
-    setSelectedAnswer(null);
-    setShowResult(false);
+    const nextQuestion = getRandomQuestion(newAskedIds);
+    if (nextQuestion) {
+      setQuestionHistory(prev => [...prev, { question: nextQuestion, selectedAnswer: null, showResult: false }]);
+      setHistoryIndex(prev => prev + 1);
+    }
   };
+
   const handleSkip = () => {
     const newAskedIds = [...askedIds, question.id];
     setAskedIds(newAskedIds);
-    setQuestion(getRandomQuestion(newAskedIds));
-    setSelectedAnswer(null);
-    setShowResult(false);
+    const nextQuestion = getRandomQuestion(newAskedIds);
+    if (nextQuestion) {
+      setQuestionHistory(prev => [...prev, { question: nextQuestion, selectedAnswer: null, showResult: false }]);
+      setHistoryIndex(prev => prev + 1);
+    }
   };
+
+  const handlePreviousQuestion = () => {
+    if (historyIndex > 0) {
+      setHistoryIndex(historyIndex - 1);
+    }
+  };
+
   const handleReset = () => {
     setAskedIds([]);
-    setQuestion(getRandomQuestion());
-    setSelectedAnswer(null);
-    setShowResult(false);
+    const firstQuestion = getRandomQuestion();
+    if (firstQuestion) {
+      setQuestionHistory([{ question: firstQuestion, selectedAnswer: null, showResult: false }]);
+      setHistoryIndex(0);
+    }
     setStats({
       correct: 0,
       total: 0
     });
   };
+
+  const canGoBack = historyIndex > 0;
+  const isViewingHistory = historyIndex < questionHistory.length - 1;
   const percentage = stats.total > 0 ? Math.round(stats.correct / stats.total * 100) : 0;
   const progress = Math.round(askedIds.length / currentQuestions.length * 100);
+
   return <div className="flex-1 bg-background py-8 px-4 pb-24 md:pb-8 overflow-y-auto">
       {/* Header */}
       <div className="max-w-3xl mx-auto mb-8">
@@ -307,13 +369,34 @@ export function SubelementPractice({
 
       {/* Actions */}
       <div className="max-w-3xl mx-auto mt-8 flex justify-center gap-4">
-        {!showResult ? <Button variant="outline" onClick={handleSkip} className="gap-2">
+        {canGoBack && (
+          <Button variant="outline" onClick={handlePreviousQuestion} className="gap-2">
+            <ChevronLeft className="w-4 h-4" />
+            Previous
+          </Button>
+        )}
+        {!showResult ? (
+          <Button variant="outline" onClick={handleSkip} className="gap-2">
             <SkipForward className="w-4 h-4" />
             Skip Question
-          </Button> : <Button onClick={handleNextQuestion} variant="default" size="lg" className="gap-2">
-            Next Question
+          </Button>
+        ) : (
+          <Button onClick={handleNextQuestion} variant="default" size="lg" className="gap-2">
+            {isViewingHistory ? "Next" : "Next Question"}
             <ChevronRight className="w-4 h-4" />
-          </Button>}
+          </Button>
+        )}
       </div>
+
+      {/* History indicator */}
+      {questionHistory.length > 1 && (
+        <motion.p 
+          initial={{ opacity: 0 }} 
+          animate={{ opacity: 1 }} 
+          className="text-center text-muted-foreground text-sm mt-4"
+        >
+          Question {historyIndex + 1} of {questionHistory.length}
+        </motion.p>
+      )}
     </div>;
 }
