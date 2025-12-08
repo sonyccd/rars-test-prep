@@ -27,6 +27,7 @@ export function PostHogProvider({ children }: { children: ReactNode }) {
           capture_pageview: true,
           capture_pageleave: true,
           autocapture: true,
+          capture_exceptions: true,
         });
         isInitialized = true;
       }
