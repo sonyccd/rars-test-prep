@@ -178,6 +178,7 @@ export type Database = {
           correct_answer: number
           created_at: string
           id: string
+          links: Json
           options: Json
           question: string
           question_group: string
@@ -187,6 +188,7 @@ export type Database = {
           correct_answer: number
           created_at?: string
           id: string
+          links?: Json
           options: Json
           question: string
           question_group: string
@@ -196,6 +198,7 @@ export type Database = {
           correct_answer?: number
           created_at?: string
           id?: string
+          links?: Json
           options?: Json
           question?: string
           question_group?: string

@@ -13,6 +13,8 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Calculator } from "@/components/Calculator";
+import { LinkPreview } from "@/components/LinkPreview";
+import type { LinkData } from "@/hooks/useQuestions";
 
 interface QuestionCardProps {
   question: Question;
@@ -21,6 +23,7 @@ interface QuestionCardProps {
   showResult?: boolean;
   questionNumber?: number;
   totalQuestions?: number;
+  hideLinks?: boolean; // Hide links during active practice test (show only on review)
 }
 
 export function QuestionCard({
@@ -30,6 +33,7 @@ export function QuestionCard({
   showResult = false,
   questionNumber,
   totalQuestions,
+  hideLinks = false,
 }: QuestionCardProps) {
   const options = ['A', 'B', 'C', 'D'] as const;
   const { user } = useAuth();
@@ -219,6 +223,23 @@ export function QuestionCard({
                 {question.options[question.correctAnswer]}
               </span>
             )}
+          </motion.div>
+        )}
+
+        {/* Link Previews - shown after answering (not during active practice test) */}
+        {showResult && !hideLinks && question.links && question.links.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="mt-6 space-y-3"
+          >
+            <h3 className="text-sm font-medium text-muted-foreground">Learn more:</h3>
+            <div className="space-y-3">
+              {question.links.map((link, index) => (
+                <LinkPreview key={index} link={link} />
+              ))}
+            </div>
           </motion.div>
         )}
       </div>
