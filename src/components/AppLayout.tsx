@@ -80,7 +80,7 @@ export function AppLayout({ children, currentView, onViewChange }: AppLayoutProp
           bookmarkCount={bookmarks?.length || 0}
           isTestAvailable={true}
         />
-        <div className="flex-1 overflow-auto">
+        <div className="flex-1 overflow-auto pt-16 md:pt-0">
           {children}
         </div>
       </div>

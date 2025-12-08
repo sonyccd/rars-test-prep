@@ -8,7 +8,9 @@ import {
   Radio,
   PanelLeftClose,
   PanelLeft,
-  BarChart3
+  BarChart3,
+  Menu,
+  X
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -17,6 +19,8 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { useState } from "react";
 
 type View = 'dashboard' | 'practice-test' | 'random-practice' | 'weak-questions' | 'bookmarks' | 'subelement-practice' | 'review-test';
 
@@ -49,6 +53,7 @@ export function DashboardSidebar({
   bookmarkCount,
   isTestAvailable,
 }: DashboardSidebarProps) {
+  const [mobileOpen, setMobileOpen] = useState(false);
   const navItems: NavItem[] = [
     { 
       id: 'dashboard', 
@@ -88,19 +93,21 @@ export function DashboardSidebar({
     },
   ];
 
-  return (
-    <div 
-      className={cn(
-        "flex flex-col h-screen bg-card border-r border-border transition-all duration-300",
-        isCollapsed ? "w-16" : "w-64"
-      )}
-    >
+  const handleNavClick = (view: View, disabled?: boolean) => {
+    if (!disabled) {
+      onViewChange(view);
+      setMobileOpen(false);
+    }
+  };
+
+  const NavContent = ({ isMobile = false }: { isMobile?: boolean }) => (
+    <>
       {/* Header */}
       <div className={cn(
         "flex items-center h-16 border-b border-border px-4",
-        isCollapsed ? "justify-center" : "justify-between"
+        !isMobile && isCollapsed ? "justify-center" : "justify-between"
       )}>
-        {!isCollapsed && (
+        {(isMobile || !isCollapsed) && (
           <div className="flex items-center gap-2">
             <Radio className="w-6 h-6 text-primary" />
             <span className="font-mono font-bold text-foreground">
@@ -108,21 +115,23 @@ export function DashboardSidebar({
             </span>
           </div>
         )}
-        {isCollapsed && (
+        {!isMobile && isCollapsed && (
           <Radio className="w-6 h-6 text-primary" />
         )}
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={onToggleCollapse}
-          className={cn("h-8 w-8 shrink-0", isCollapsed && "hidden md:flex")}
-        >
-          {isCollapsed ? (
-            <PanelLeft className="w-4 h-4" />
-          ) : (
-            <PanelLeftClose className="w-4 h-4" />
-          )}
-        </Button>
+        {!isMobile && (
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onToggleCollapse}
+            className={cn("h-8 w-8 shrink-0", isCollapsed && "hidden md:flex")}
+          >
+            {isCollapsed ? (
+              <PanelLeft className="w-4 h-4" />
+            ) : (
+              <PanelLeftClose className="w-4 h-4" />
+            )}
+          </Button>
+        )}
       </div>
 
       {/* Navigation */}
@@ -130,10 +139,11 @@ export function DashboardSidebar({
         {navItems.map((item) => {
           const isActive = currentView === item.id;
           const Icon = item.icon;
+          const showExpanded = isMobile || !isCollapsed;
 
           const buttonContent = (
             <button
-              onClick={() => !item.disabled && onViewChange(item.id)}
+              onClick={() => handleNavClick(item.id, item.disabled)}
               disabled={item.disabled}
               className={cn(
                 "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors",
@@ -141,7 +151,7 @@ export function DashboardSidebar({
                   ? "bg-primary/10 text-primary border border-primary/20" 
                   : "text-muted-foreground hover:text-foreground hover:bg-secondary",
                 item.disabled && "opacity-50 cursor-not-allowed hover:bg-transparent hover:text-muted-foreground",
-                isCollapsed && "justify-center px-2"
+                !showExpanded && "justify-center px-2"
               )}
             >
               <div className="relative shrink-0">
@@ -152,13 +162,13 @@ export function DashboardSidebar({
                   </span>
                 )}
               </div>
-              {!isCollapsed && (
+              {showExpanded && (
                 <span className="text-sm font-medium truncate">{item.label}</span>
               )}
             </button>
           );
 
-          if (isCollapsed) {
+          if (!showExpanded) {
             return (
               <Tooltip key={item.id} delayDuration={0}>
                 <TooltipTrigger asChild>
@@ -180,7 +190,7 @@ export function DashboardSidebar({
 
       {/* Footer */}
       <div className="border-t border-border p-2">
-        {isCollapsed ? (
+        {!isMobile && isCollapsed ? (
           <Tooltip delayDuration={0}>
             <TooltipTrigger asChild>
               <Button
@@ -199,7 +209,10 @@ export function DashboardSidebar({
         ) : (
           <Button
             variant="ghost"
-            onClick={onSignOut}
+            onClick={() => {
+              onSignOut();
+              setMobileOpen(false);
+            }}
             className="w-full justify-start gap-3 text-muted-foreground hover:text-destructive"
           >
             <LogOut className="w-5 h-5" />
@@ -207,6 +220,40 @@ export function DashboardSidebar({
           </Button>
         )}
       </div>
-    </div>
+    </>
+  );
+
+  return (
+    <>
+      {/* Mobile Hamburger Button */}
+      <div className="md:hidden fixed top-4 left-4 z-50">
+        <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+          <SheetTrigger asChild>
+            <Button
+              variant="outline"
+              size="icon"
+              className="bg-card border-border shadow-lg"
+            >
+              <Menu className="w-5 h-5" />
+            </Button>
+          </SheetTrigger>
+          <SheetContent side="left" className="w-64 p-0 bg-card border-border">
+            <div className="flex flex-col h-full">
+              <NavContent isMobile />
+            </div>
+          </SheetContent>
+        </Sheet>
+      </div>
+
+      {/* Desktop Sidebar */}
+      <div 
+        className={cn(
+          "hidden md:flex flex-col h-screen bg-card border-r border-border transition-all duration-300",
+          isCollapsed ? "w-16" : "w-64"
+        )}
+      >
+        <NavContent />
+      </div>
+    </>
   );
 }
