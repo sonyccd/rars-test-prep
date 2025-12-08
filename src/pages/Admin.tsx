@@ -7,7 +7,8 @@ import { AdminGlossary } from "@/components/admin/AdminGlossary";
 import { AdminQuestions } from "@/components/admin/AdminQuestions";
 
 import { AdminStats } from "@/components/admin/AdminStats";
-import { Loader2, ShieldAlert } from "lucide-react";
+import { Loader2, ShieldAlert, BookOpen } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AppLayout } from "@/components/AppLayout";
 import { TestType } from "@/components/DashboardSidebar";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
@@ -19,6 +20,7 @@ export default function Admin() {
   const [sidebarTest, setSidebarTest] = useState<TestType>('technician');
   const [adminExamType, setAdminExamType] = useState<TestType>('technician');
   const [activeTab, setActiveTab] = useState("stats");
+  const [activeSection, setActiveSection] = useState<"exam" | "glossary">("exam");
   const [linkQuestionId, setLinkQuestionId] = useState("");
 
   useEffect(() => {
@@ -53,6 +55,7 @@ export default function Admin() {
 
   const handleAddLinkToQuestion = (questionId: string) => {
     setLinkQuestionId(questionId);
+    setActiveSection("exam");
     setActiveTab("questions");
   };
 
@@ -76,18 +79,51 @@ export default function Admin() {
             <p className="text-muted-foreground mt-2">Manage glossary terms, questions, and learning resources</p>
           </div>
 
-          <Tabs value={activeTab} onValueChange={(value) => {
-            setActiveTab(value);
-            if (value !== "questions") setLinkQuestionId("");
-          }} className="w-full">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
-              <TabsList className="grid w-full sm:w-auto grid-cols-3">
-                <TabsTrigger value="stats">Statistics</TabsTrigger>
-                <TabsTrigger value="glossary">Glossary Terms</TabsTrigger>
-                <TabsTrigger value="questions">Questions</TabsTrigger>
-              </TabsList>
+          {/* Section Toggle */}
+          <div className="flex gap-4 mb-6">
+            <button
+              onClick={() => setActiveSection("exam")}
+              className={`flex-1 p-4 rounded-lg border-2 transition-all text-left ${
+                activeSection === "exam" 
+                  ? "border-primary bg-primary/5" 
+                  : "border-border hover:border-muted-foreground/50"
+              }`}
+            >
+              <div className="font-semibold text-foreground mb-1">Exam Content</div>
+              <p className="text-sm text-muted-foreground">
+                Statistics and questions for each license class
+              </p>
+            </button>
+            <button
+              onClick={() => setActiveSection("glossary")}
+              className={`flex-1 p-4 rounded-lg border-2 transition-all text-left ${
+                activeSection === "glossary" 
+                  ? "border-primary bg-primary/5" 
+                  : "border-border hover:border-muted-foreground/50"
+              }`}
+            >
+              <div className="flex items-center gap-2 font-semibold text-foreground mb-1">
+                <BookOpen className="w-4 h-4" />
+                Glossary Terms
+                <span className="text-xs font-normal bg-muted px-2 py-0.5 rounded">All Exams</span>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Shared vocabulary terms across all license classes
+              </p>
+            </button>
+          </div>
 
-              {activeTab !== "glossary" && (
+          {activeSection === "exam" ? (
+            <Tabs value={activeTab} onValueChange={(value) => {
+              setActiveTab(value);
+              if (value !== "questions") setLinkQuestionId("");
+            }} className="w-full">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+                <TabsList className="grid w-full sm:w-auto grid-cols-2">
+                  <TabsTrigger value="stats">Statistics</TabsTrigger>
+                  <TabsTrigger value="questions">Questions</TabsTrigger>
+                </TabsList>
+
                 <div className="flex items-center gap-2">
                   <span className="text-sm text-muted-foreground">Exam:</span>
                   <ToggleGroup 
@@ -107,21 +143,28 @@ export default function Admin() {
                     </ToggleGroupItem>
                   </ToggleGroup>
                 </div>
-              )}
-            </div>
+              </div>
 
-            <TabsContent value="stats">
-              <AdminStats testType={adminExamType} onAddLinkToQuestion={handleAddLinkToQuestion} />
-            </TabsContent>
+              <TabsContent value="stats">
+                <AdminStats testType={adminExamType} onAddLinkToQuestion={handleAddLinkToQuestion} />
+              </TabsContent>
 
-            <TabsContent value="glossary">
+              <TabsContent value="questions">
+                <AdminQuestions testType={adminExamType} highlightQuestionId={linkQuestionId} />
+              </TabsContent>
+            </Tabs>
+          ) : (
+            <div>
+              <div className="flex items-center gap-2 mb-6">
+                <BookOpen className="w-5 h-5 text-primary" />
+                <h2 className="text-xl font-semibold text-foreground">Glossary Terms</h2>
+                <span className="text-xs bg-muted px-2 py-1 rounded text-muted-foreground">
+                  Shared across all exams
+                </span>
+              </div>
               <AdminGlossary />
-            </TabsContent>
-
-            <TabsContent value="questions">
-              <AdminQuestions testType={adminExamType} highlightQuestionId={linkQuestionId} />
-            </TabsContent>
-          </Tabs>
+            </div>
+          )}
         </div>
       </div>
     </AppLayout>
