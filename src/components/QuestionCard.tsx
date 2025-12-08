@@ -16,6 +16,7 @@ import {
 import { Calculator } from "@/components/Calculator";
 import { LinkPreview } from "@/components/LinkPreview";
 import { GlossaryHighlightedText } from "@/components/GlossaryHighlightedText";
+import { MarkdownText } from "@/components/MarkdownText";
 import type { LinkData } from "@/hooks/useQuestions";
 
 interface QuestionCardProps {
@@ -288,9 +289,7 @@ export function QuestionCard({
                       </div>
                     )}
                   </div>
-                  <p className="text-sm text-muted-foreground leading-relaxed">
-                    {question.explanation}
-                  </p>
+                  <MarkdownText text={question.explanation} />
                 </div>
               )}
               
