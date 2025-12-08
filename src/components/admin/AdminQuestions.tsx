@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -10,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import { Plus, Trash2, Search, Loader2, Pencil, Link as LinkIcon, ExternalLink, ThumbsUp, ThumbsDown, FileText, Filter, X } from "lucide-react";
 import { BulkImportQuestions } from "./BulkImportQuestions";
+import { EditHistoryViewer, EditHistoryEntry } from "./EditHistoryViewer";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useExplanationFeedbackStats } from "@/hooks/useExplanationFeedback";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
@@ -34,6 +36,7 @@ interface Question {
   question_group: string;
   links?: LinkData[];
   explanation?: string | null;
+  edit_history?: EditHistoryEntry[];
 }
 interface AdminQuestionsProps {
   testType: 'technician' | 'general' | 'extra';
@@ -49,6 +52,7 @@ export function AdminQuestions({
   highlightQuestionId
 }: AdminQuestionsProps) {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
   const {
     data: feedbackStats = {}
   } = useExplanationFeedbackStats();
@@ -86,7 +90,7 @@ export function AdminQuestions({
       const {
         data,
         error
-      } = await supabase.from('questions').select('id, question, options, correct_answer, subelement, question_group, links, explanation').order('id', {
+      } = await supabase.from('questions').select('id, question, options, correct_answer, subelement, question_group, links, explanation, edit_history').order('id', {
         ascending: true
       });
       if (error) throw error;
@@ -94,7 +98,8 @@ export function AdminQuestions({
         ...q,
         options: q.options as string[],
         links: (Array.isArray(q.links) ? q.links : []) as unknown as LinkData[],
-        explanation: q.explanation
+        explanation: q.explanation,
+        edit_history: (Array.isArray(q.edit_history) ? q.edit_history : []) as unknown as EditHistoryEntry[]
       })) as Question[];
     }
   });
@@ -109,7 +114,15 @@ export function AdminQuestions({
     }
   }, [highlightQuestionId, questions]);
   const addQuestion = useMutation({
-    mutationFn: async (question: Omit<Question, 'links'>) => {
+    mutationFn: async (question: Omit<Question, 'links' | 'edit_history'>) => {
+      const historyEntry: EditHistoryEntry = {
+        user_id: user?.id || '',
+        user_email: user?.email || 'Unknown',
+        action: 'created',
+        changes: {},
+        timestamp: new Date().toISOString(),
+      };
+
       const {
         error
       } = await supabase.from('questions').insert({
@@ -119,7 +132,8 @@ export function AdminQuestions({
         correct_answer: question.correct_answer,
         subelement: question.subelement.trim(),
         question_group: question.question_group.trim(),
-        links: []
+        links: [],
+        edit_history: JSON.parse(JSON.stringify([historyEntry]))
       });
       if (error) throw error;
     },
@@ -142,9 +156,40 @@ export function AdminQuestions({
     }
   });
   const updateQuestion = useMutation({
-    mutationFn: async (question: Question & {
-      explanation?: string | null;
-    }) => {
+    mutationFn: async (params: { question: Question & { explanation?: string | null }; originalQuestion: Question }) => {
+      const { question, originalQuestion } = params;
+      
+      // Build changes object
+      const changes: Record<string, { from: unknown; to: unknown }> = {};
+      if (originalQuestion.question !== question.question.trim()) {
+        changes.question = { from: originalQuestion.question, to: question.question.trim() };
+      }
+      if (JSON.stringify(originalQuestion.options) !== JSON.stringify(question.options)) {
+        changes.options = { from: originalQuestion.options, to: question.options };
+      }
+      if (originalQuestion.correct_answer !== question.correct_answer) {
+        changes.correct_answer = { from: originalQuestion.correct_answer, to: question.correct_answer };
+      }
+      if (originalQuestion.subelement !== question.subelement.trim()) {
+        changes.subelement = { from: originalQuestion.subelement, to: question.subelement.trim() };
+      }
+      if (originalQuestion.question_group !== question.question_group.trim()) {
+        changes.question_group = { from: originalQuestion.question_group, to: question.question_group.trim() };
+      }
+      if ((originalQuestion.explanation || '') !== (question.explanation?.trim() || '')) {
+        changes.explanation = { from: originalQuestion.explanation || '', to: question.explanation?.trim() || '' };
+      }
+
+      const historyEntry: EditHistoryEntry = {
+        user_id: user?.id || '',
+        user_email: user?.email || 'Unknown',
+        action: 'updated',
+        changes,
+        timestamp: new Date().toISOString(),
+      };
+
+      const existingHistory = originalQuestion.edit_history || [];
+
       const {
         error
       } = await supabase.from('questions').update({
@@ -153,7 +198,8 @@ export function AdminQuestions({
         correct_answer: question.correct_answer,
         subelement: question.subelement.trim(),
         question_group: question.question_group.trim(),
-        explanation: question.explanation?.trim() || null
+        explanation: question.explanation?.trim() || null,
+        edit_history: JSON.parse(JSON.stringify([...existingHistory, historyEntry]))
       }).eq('id', question.id);
       if (error) throw error;
     },
@@ -348,13 +394,16 @@ export function AdminQuestions({
       return;
     }
     updateQuestion.mutate({
-      id: editingQuestion.id,
-      question: editQuestion,
-      options: editOptions.map(o => o.trim()),
-      correct_answer: parseInt(editCorrectAnswer),
-      subelement: editSubelement,
-      question_group: editQuestionGroup,
-      explanation: editExplanation
+      question: {
+        id: editingQuestion.id,
+        question: editQuestion,
+        options: editOptions.map(o => o.trim()),
+        correct_answer: parseInt(editCorrectAnswer),
+        subelement: editSubelement,
+        question_group: editQuestionGroup,
+        explanation: editExplanation
+      },
+      originalQuestion: editingQuestion
     });
   };
   return <div className="flex flex-col flex-1 min-h-0">
@@ -477,6 +526,11 @@ export function AdminQuestions({
             </div>
 
             <Separator />
+
+            <EditHistoryViewer 
+              history={editingQuestion?.edit_history || []} 
+              entityType="question" 
+            />
             
             <div className="flex justify-between gap-2">
               <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
