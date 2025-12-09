@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { Calculator as CalculatorIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { usePostHog, ANALYTICS_EVENTS } from "@/hooks/usePostHog";
 
@@ -178,15 +179,24 @@ export function Calculator({ className }: CalculatorProps) {
 
   return (
     <div className={cn("relative", className)}>
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={() => setIsOpen(!isOpen)}
-        className="gap-2 w-28 justify-start hover:bg-muted hover:text-foreground"
-      >
-        <CalculatorIcon className="w-4 h-4 flex-shrink-0" />
-        {isOpen ? "Close" : "Calculator"}
-      </Button>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setIsOpen(!isOpen)}
+            className="gap-2 w-28 justify-start hover:bg-muted hover:text-foreground"
+            aria-label={isOpen ? "Close calculator" : "Open calculator"}
+            aria-expanded={isOpen}
+          >
+            <CalculatorIcon className="w-4 h-4 flex-shrink-0" aria-hidden="true" />
+            {isOpen ? "Close" : "Calculator"}
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>
+          <p>{isOpen ? "Close calculator" : "Open calculator for calculations"}</p>
+        </TooltipContent>
+      </Tooltip>
       
       {isOpen && (
         <div className="absolute right-0 top-0 translate-x-[calc(100%+0.5rem)] bg-card border border-border rounded-lg p-3 shadow-lg w-56 z-50">
