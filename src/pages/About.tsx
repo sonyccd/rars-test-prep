@@ -346,83 +346,36 @@ export default function About() {
                 <div className="bg-card border border-border rounded-2xl p-6 relative overflow-hidden">
                   <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-accent/5 pointer-events-none" />
                   
-                  <svg
-                    viewBox="0 0 400 180"
-                    className="w-full h-auto"
-                    aria-label="North Carolina state outline"
-                  >
-                    {/* Background glow effect */}
-                    <defs>
-                      <linearGradient id="ncGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity="0.2" />
-                        <stop offset="50%" stopColor="hsl(var(--accent))" stopOpacity="0.15" />
-                        <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity="0.1" />
-                      </linearGradient>
-                      <linearGradient id="ncStroke" x1="0%" y1="0%" x2="100%" y2="0%">
-                        <stop offset="0%" stopColor="hsl(var(--primary))" />
-                        <stop offset="50%" stopColor="hsl(var(--accent))" />
-                        <stop offset="100%" stopColor="hsl(var(--primary))" />
-                      </linearGradient>
-                      <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
-                        <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
-                        <feMerge>
-                          <feMergeNode in="coloredBlur"/>
-                          <feMergeNode in="SourceGraphic"/>
-                        </feMerge>
-                      </filter>
-                      <radialGradient id="raleighGlow" cx="50%" cy="50%" r="50%">
-                        <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity="0.8" />
-                        <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity="0" />
-                      </radialGradient>
-                    </defs>
-                    
-                    {/* NC State outline - simplified path */}
-                    <path
-                      d="M 20 90 
-                         L 25 85 L 35 88 L 50 82 L 65 85 L 80 78 L 95 82 L 110 75 
-                         L 125 80 L 140 72 L 155 78 L 170 70 L 185 75 L 200 68 
-                         L 215 72 L 230 65 L 245 70 L 260 62 L 275 68 L 290 60
-                         L 305 65 L 320 58 L 335 55 L 350 50 L 365 48 L 375 52
-                         L 380 58 L 378 65 L 372 72 L 368 80 L 375 85 L 380 92
-                         L 378 100 L 370 105 L 362 102 L 355 108 L 348 105
-                         L 340 112 L 332 108 L 322 115 L 310 110 L 298 118
-                         L 285 112 L 270 120 L 255 115 L 240 122 L 225 118
-                         L 210 125 L 195 120 L 180 128 L 165 122 L 150 130
-                         L 135 125 L 120 132 L 105 128 L 90 135 L 75 130
-                         L 60 138 L 45 132 L 30 140 L 20 135 L 15 125 L 18 115
-                         L 15 105 L 18 95 Z"
-                      fill="url(#ncGradient)"
-                      stroke="url(#ncStroke)"
-                      strokeWidth="2"
-                      filter="url(#glow)"
-                      className="transition-all duration-500"
+                  <div className="relative">
+                    <img 
+                      src="/nc-outline.svg" 
+                      alt="North Carolina state outline"
+                      className="w-full h-auto opacity-80"
+                      style={{ 
+                        filter: 'brightness(0) saturate(100%) invert(43%) sepia(93%) saturate(364%) hue-rotate(143deg) brightness(95%) contrast(90%)'
+                      }}
                     />
                     
-                    {/* Raleigh marker with pulse */}
-                    <g transform="translate(255, 95)">
-                      <circle r="12" fill="url(#raleighGlow)" className="animate-pulse-slow" />
-                      <circle r="6" fill="hsl(var(--primary))" stroke="hsl(var(--primary-foreground))" strokeWidth="2" />
-                      <circle r="2" fill="hsl(var(--primary-foreground))" />
-                    </g>
+                    {/* Raleigh marker overlay */}
+                    <div className="absolute" style={{ left: '52%', top: '38%', transform: 'translate(-50%, -50%)' }}>
+                      <div className="relative">
+                        {/* Pulsing rings */}
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <div className="w-8 h-8 rounded-full bg-primary/30 animate-ping" style={{ animationDuration: '2s' }} />
+                        </div>
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <div className="w-12 h-12 rounded-full bg-primary/20 animate-ping" style={{ animationDuration: '2s', animationDelay: '0.5s' }} />
+                        </div>
+                        {/* Center dot */}
+                        <div className="relative w-4 h-4 rounded-full bg-primary border-2 border-primary-foreground shadow-lg" />
+                      </div>
+                    </div>
                     
                     {/* Raleigh label */}
-                    <text
-                      x="255"
-                      y="125"
-                      textAnchor="middle"
-                      className="fill-foreground text-xs font-mono font-bold"
-                      style={{ fontSize: '11px' }}
-                    >
+                    <div className="absolute font-mono font-bold text-xs text-foreground" style={{ left: '52%', top: '55%', transform: 'translateX(-50%)' }}>
                       RALEIGH
-                    </text>
-                    
-                    {/* Radio wave emanating from Raleigh */}
-                    <g transform="translate(255, 95)" opacity="0.4">
-                      <circle r="20" fill="none" stroke="hsl(var(--primary))" strokeWidth="1" className="animate-ping" style={{ animationDuration: '2s' }} />
-                      <circle r="30" fill="none" stroke="hsl(var(--primary))" strokeWidth="0.5" className="animate-ping" style={{ animationDuration: '2s', animationDelay: '0.5s' }} />
-                      <circle r="40" fill="none" stroke="hsl(var(--primary))" strokeWidth="0.3" className="animate-ping" style={{ animationDuration: '2s', animationDelay: '1s' }} />
-                    </g>
-                  </svg>
+                    </div>
+                  </div>
                   
                   {/* Caption */}
                   <p className="text-center text-sm text-muted-foreground mt-4 relative z-10">
