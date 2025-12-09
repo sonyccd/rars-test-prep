@@ -7,6 +7,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { DashboardSidebar, TestType, testTypes } from '@/components/DashboardSidebar';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { Loader2 } from 'lucide-react';
+import { HelpButton } from '@/components/HelpButton';
 
 type View = 'dashboard' | 'practice-test' | 'random-practice' | 'weak-questions' | 'bookmarks' | 'subelement-practice' | 'review-test' | 'glossary' | 'glossary-flashcards';
 
@@ -118,6 +119,7 @@ export function AppLayout({ children, currentView, onViewChange, selectedTest, o
         <div className="flex-1 overflow-y-auto pt-16 md:pt-0 flex flex-col">
           {children}
         </div>
+        <HelpButton />
       </div>
     </TooltipProvider>
   );
