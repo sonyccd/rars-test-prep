@@ -148,7 +148,7 @@ export function UIPreviewSection() {
           className="text-center mb-12"
         >
           <h2 className="text-3xl md:text-4xl font-mono font-bold text-foreground mb-4">
-            See It In Action
+            Modern & Intuitive Design
           </h2>
           <p className="text-muted-foreground max-w-2xl mx-auto">
             A modern, distraction-free interface designed to help you focus on what matters: passing your exam.
