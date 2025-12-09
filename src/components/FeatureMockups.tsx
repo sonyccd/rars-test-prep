@@ -232,20 +232,39 @@ export function GlossaryMockup() {
       </div>
       
       <div className="p-4">
-        <motion.div
-          initial={{ rotateY: 0 }}
-          animate={{ rotateY: [0, 180, 180, 0] }}
-          transition={{ duration: 3, repeat: Infinity, repeatDelay: 1 }}
-          className="relative h-28 perspective-1000"
-        >
-          {/* Front of card */}
-          <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-cyan-500/10 to-cyan-500/5 rounded-lg border border-cyan-500/20">
-            <div className="text-center">
-              <div className="text-sm font-bold text-foreground">SWR</div>
-              <div className="text-[10px] text-muted-foreground mt-1">Tap to reveal</div>
+        <div className="relative h-28" style={{ perspective: "1000px" }}>
+          <motion.div
+            initial={{ rotateY: 0 }}
+            animate={{ rotateY: [0, 0, 180, 180, 0] }}
+            transition={{ duration: 4, repeat: Infinity, times: [0, 0.2, 0.3, 0.8, 1] }}
+            className="relative w-full h-full"
+            style={{ transformStyle: "preserve-3d" }}
+          >
+            {/* Front of card */}
+            <div 
+              className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-cyan-500/10 to-cyan-500/5 rounded-lg border border-cyan-500/20"
+              style={{ backfaceVisibility: "hidden" }}
+            >
+              <div className="text-center">
+                <div className="text-sm font-bold text-foreground">SWR</div>
+                <div className="text-[10px] text-muted-foreground mt-1">Tap to reveal</div>
+              </div>
             </div>
-          </div>
-        </motion.div>
+            
+            {/* Back of card */}
+            <div 
+              className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-cyan-500/20 to-cyan-500/10 rounded-lg border border-cyan-500/30"
+              style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)" }}
+            >
+              <div className="text-center px-3">
+                <div className="text-[10px] font-medium text-cyan-600 dark:text-cyan-400 mb-1">Definition</div>
+                <div className="text-xs text-foreground leading-relaxed">
+                  Standing Wave Ratio - A measure of impedance matching between transmission line and antenna
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        </div>
         
         <div className="flex justify-center gap-4 mt-4">
           <button className="px-3 py-1.5 text-[10px] bg-red-500/10 text-red-500 rounded-md">
