@@ -257,7 +257,11 @@ export default function About() {
                       </p>
                       <p>When you use open-source software, you know exactly what you're getting. No surprise monetization, no rug pulls. Just honest tools built by people who care about the same things you do.</p>
                       <p className="text-foreground font-medium">
-                        Want to contribute? Found a bug? Have an idea? We'd love to hear from you.
+                        Want to contribute? Found a bug? Have an idea?{" "}
+                        <a href="https://github.com/sonyccd/rars-test-prep" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline inline-flex items-center gap-1">
+                          Check out our GitHub repo
+                          <ExternalLink className="w-4 h-4" />
+                        </a>
                       </p>
                     </div>
                     <div className="flex flex-wrap gap-3 mt-6">
