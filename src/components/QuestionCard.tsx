@@ -8,6 +8,7 @@ import { motion } from "framer-motion";
 import { Bookmark, BookmarkCheck, MessageSquare, ThumbsUp, ThumbsDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   Popover,
   PopoverContent,
@@ -121,18 +122,26 @@ export function QuestionCard({
                     setNoteText(existingNote || '');
                   }
                 }}>
-                  <PopoverTrigger asChild>
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      className={cn(
-                        "h-8 w-8",
-                        existingNote && "text-accent"
-                      )}
-                    >
-                      <MessageSquare className="w-4 h-4" />
-                    </Button>
-                  </PopoverTrigger>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <PopoverTrigger asChild>
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className={cn(
+                            "h-8 w-8",
+                            existingNote && "text-accent"
+                          )}
+                          aria-label={existingNote ? "Edit note" : "Add note"}
+                        >
+                          <MessageSquare className="w-4 h-4" aria-hidden="true" />
+                        </Button>
+                      </PopoverTrigger>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>{existingNote ? "Edit note" : "Add note"}</p>
+                    </TooltipContent>
+                  </Tooltip>
                   <PopoverContent className="w-80 bg-card border-border" align="end">
                     <div className="space-y-3">
                       <p className="text-sm font-medium text-foreground">Add a note</p>
@@ -160,21 +169,30 @@ export function QuestionCard({
                     </div>
                   </PopoverContent>
                 </Popover>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className={cn(
-                    "h-8 w-8",
-                    bookmarked && "text-primary"
-                  )}
-                  onClick={handleBookmarkClick}
-                >
-                  {bookmarked ? (
-                    <BookmarkCheck className="w-4 h-4" />
-                  ) : (
-                    <Bookmark className="w-4 h-4" />
-                  )}
-                </Button>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className={cn(
+                        "h-8 w-8",
+                        bookmarked && "text-primary"
+                      )}
+                      onClick={handleBookmarkClick}
+                      aria-label={bookmarked ? "Remove bookmark" : "Add bookmark"}
+                      aria-pressed={bookmarked}
+                    >
+                      {bookmarked ? (
+                        <BookmarkCheck className="w-4 h-4" aria-hidden="true" />
+                      ) : (
+                        <Bookmark className="w-4 h-4" aria-hidden="true" />
+                      )}
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>{bookmarked ? "Remove bookmark" : "Bookmark this question"}</p>
+                  </TooltipContent>
+                </Tooltip>
               </div>
             )}
           </div>
@@ -267,28 +285,46 @@ export function QuestionCard({
                     {user && (
                       <div className="flex items-center gap-1">
                         <span className="text-xs text-muted-foreground mr-1">Helpful?</span>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className={cn(
-                            "h-7 w-7",
-                            userFeedback?.is_helpful === true && "text-success bg-success/10"
-                          )}
-                          onClick={() => handleFeedback(true)}
-                        >
-                          <ThumbsUp className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className={cn(
-                            "h-7 w-7",
-                            userFeedback?.is_helpful === false && "text-destructive bg-destructive/10"
-                          )}
-                          onClick={() => handleFeedback(false)}
-                        >
-                          <ThumbsDown className="w-4 h-4" />
-                        </Button>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className={cn(
+                                "h-7 w-7",
+                                userFeedback?.is_helpful === true && "text-success bg-success/10"
+                              )}
+                              onClick={() => handleFeedback(true)}
+                              aria-label="Mark explanation as helpful"
+                              aria-pressed={userFeedback?.is_helpful === true}
+                            >
+                              <ThumbsUp className="w-4 h-4" aria-hidden="true" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Helpful</p>
+                          </TooltipContent>
+                        </Tooltip>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className={cn(
+                                "h-7 w-7",
+                                userFeedback?.is_helpful === false && "text-destructive bg-destructive/10"
+                              )}
+                              onClick={() => handleFeedback(false)}
+                              aria-label="Mark explanation as not helpful"
+                              aria-pressed={userFeedback?.is_helpful === false}
+                            >
+                              <ThumbsDown className="w-4 h-4" aria-hidden="true" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Not helpful</p>
+                          </TooltipContent>
+                        </Tooltip>
                       </div>
                     )}
                   </div>

@@ -141,9 +141,25 @@ export function DashboardSidebar({
               <span className="text-primary">RARS Test Prep</span>
             </span>
           </div>}
-        {!isMobile && <Button variant="ghost" size="icon" onClick={onToggleCollapse} className="h-7 w-7 shrink-0">
-            {isCollapsed ? <PanelLeft className="w-4 h-4" /> : <PanelLeftClose className="w-4 h-4" />}
-          </Button>}
+        {!isMobile && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={onToggleCollapse} 
+                className="h-7 w-7 shrink-0"
+                aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+                aria-expanded={!isCollapsed}
+              >
+                {isCollapsed ? <PanelLeft className="w-4 h-4" aria-hidden="true" /> : <PanelLeftClose className="w-4 h-4" aria-hidden="true" />}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="right">
+              <p>{isCollapsed ? "Expand sidebar" : "Collapse sidebar"}</p>
+            </TooltipContent>
+          </Tooltip>
+        )}
       </div>
 
       {/* Test Type Selector */}
@@ -316,11 +332,23 @@ export function DashboardSidebar({
       {/* Mobile Hamburger Button */}
       <div className="md:hidden fixed top-4 left-4 z-50">
         <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-          <SheetTrigger asChild>
-            <Button variant="outline" size="icon" className="bg-card border-border shadow-lg">
-              <Menu className="w-5 h-5" />
-            </Button>
-          </SheetTrigger>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <SheetTrigger asChild>
+                <Button 
+                  variant="outline" 
+                  size="icon" 
+                  className="bg-card border-border shadow-lg"
+                  aria-label="Open navigation menu"
+                >
+                  <Menu className="w-5 h-5" aria-hidden="true" />
+                </Button>
+              </SheetTrigger>
+            </TooltipTrigger>
+            <TooltipContent side="right">
+              <p>Open menu</p>
+            </TooltipContent>
+          </Tooltip>
           <SheetContent side="left" className="w-64 p-0 bg-card border-border">
             <div className="flex flex-col h-full">
               <NavContent isMobile />
