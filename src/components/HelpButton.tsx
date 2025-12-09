@@ -75,7 +75,7 @@ export function HelpButton() {
             </DialogDescription>
           </DialogHeader>
 
-          <Tabs defaultValue="shortcuts" className="mt-2">
+          <Tabs defaultValue="shortcuts" className="mt-2 flex flex-col">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="shortcuts" className="flex items-center gap-2">
                 <Keyboard className="h-4 w-4" aria-hidden="true" />
@@ -87,25 +87,26 @@ export function HelpButton() {
               </TabsTrigger>
             </TabsList>
 
-            <TabsContent value="shortcuts" className="mt-4 space-y-4">
-              {shortcutGroups.map(group => <div key={group.title}>
-                  <h3 className="text-sm font-medium text-muted-foreground mb-2">
-                    {group.title}
-                  </h3>
-                  <div className="space-y-1.5">
-                    {group.shortcuts.map((shortcut, index) => <div key={index} className="flex items-center justify-between py-1">
-                        <span className="text-sm text-foreground">
-                          {shortcut.description}
-                        </span>
-                        <div className="flex items-center gap-1">
-                          {shortcut.keys.map((key, keyIndex) => <kbd key={keyIndex} className="inline-flex items-center justify-center min-w-[24px] h-6 px-2 text-xs font-mono font-medium bg-muted border border-border rounded">
-                              {key}
-                            </kbd>)}
-                        </div>
-                      </div>)}
-                  </div>
-                </div>)}
-            </TabsContent>
+            <div className="min-h-[280px]">
+              <TabsContent value="shortcuts" className="mt-4 space-y-4">
+                {shortcutGroups.map(group => <div key={group.title}>
+                    <h3 className="text-sm font-medium text-muted-foreground mb-2">
+                      {group.title}
+                    </h3>
+                    <div className="space-y-1.5">
+                      {group.shortcuts.map((shortcut, index) => <div key={index} className="flex items-center justify-between py-1">
+                          <span className="text-sm text-foreground">
+                            {shortcut.description}
+                          </span>
+                          <div className="flex items-center gap-1">
+                            {shortcut.keys.map((key, keyIndex) => <kbd key={keyIndex} className="inline-flex items-center justify-center min-w-[24px] h-6 px-2 text-xs font-mono font-medium bg-muted border border-border rounded">
+                                {key}
+                              </kbd>)}
+                          </div>
+                        </div>)}
+                    </div>
+                  </div>)}
+              </TabsContent>
 
             <TabsContent value="feedback" className="mt-4 space-y-4">
               <p className="text-sm text-muted-foreground">
@@ -140,6 +141,7 @@ export function HelpButton() {
                 </a>
               </div>
             </TabsContent>
+            </div>
           </Tabs>
         </DialogContent>
       </Dialog>
