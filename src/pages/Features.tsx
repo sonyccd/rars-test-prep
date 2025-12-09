@@ -1,4 +1,5 @@
 import { LandingNav } from "@/components/LandingNav";
+import { MarketingFooter } from "@/components/MarketingFooter";
 import { motion } from "framer-motion";
 import {
   Shuffle,
@@ -466,24 +467,7 @@ export default function Features() {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="py-8 px-4 border-t border-border">
-        <div className="max-w-6xl mx-auto text-center text-muted-foreground space-y-3">
-          <p className="text-sm">
-            © {new Date().getFullYear()} Brad Bazemore &{" "}
-            <a
-              href="https://www.rars.org/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-primary hover:underline"
-            >
-              RARS
-            </a>
-            . All rights reserved.
-          </p>
-          <p className="text-sm">Made with ❤️ in North Carolina</p>
-        </div>
-      </footer>
+      <MarketingFooter />
     </div>
   );
 }
